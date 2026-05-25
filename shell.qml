@@ -67,9 +67,18 @@ PanelWindow {
                 panelWindow: root
             }
 
-            TaskbarSystemUpdate {
+            TaskbarNotifications {
+                id: taskbarNotifications
+
                 anchors.right: parent.right
                 anchors.rightMargin: taskbarSystray.width + taskbarBluetooth.width + taskbarSound.width + 12
+                anchors.verticalCenter: parent.verticalCenter
+                panelWindow: root
+            }
+
+            TaskbarSystemUpdate {
+                anchors.right: parent.right
+                anchors.rightMargin: taskbarSystray.width + taskbarBluetooth.width + taskbarSound.width + taskbarNotifications.width + 16
                 anchors.verticalCenter: parent.verticalCenter
             }
 
