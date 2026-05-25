@@ -9,6 +9,7 @@ Item {
     property var pendingUpdates: []
     property bool checking: false
     property bool updating: false
+    property bool updaterOpen: false
     property string lastChecked: ""
 
     function checkUpdates() {
@@ -20,6 +21,7 @@ Item {
         checkProcess.running = true;
     }
 
+    onUpdaterOpenChanged: updaterWindow.visible = root.updaterOpen
     implicitWidth: updateButton.width
     implicitHeight: updateButton.height
 
@@ -69,8 +71,8 @@ Item {
         width: Math.max(30, updateIcon.implicitWidth + 16)
         height: 22
         radius: 6
-        color: updaterWindow.visible ? "#313244" : "transparent"
-        border.width: updaterWindow.visible ? 1 : 0
+        color: root.updaterOpen ? "#313244" : "transparent"
+        border.width: root.updaterOpen ? 1 : 0
         border.color: "#cdd6f4"
 
         Text {
@@ -111,7 +113,7 @@ Item {
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
-            onClicked: updaterWindow.visible = !updaterWindow.visible
+            onClicked: root.updaterOpen = !root.updaterOpen
         }
 
     }
@@ -123,6 +125,7 @@ Item {
         implicitHeight: 520
         visible: false
         title: "System Updater"
+        onVisibleChanged: root.updaterOpen = visible
 
         Rectangle {
             anchors.fill: parent
@@ -282,7 +285,7 @@ Item {
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
                             root.updating = true;
-                            updaterWindow.visible = false;
+                            root.updaterOpen = false;
                             updateProcess.running = true;
                         }
                     }
