@@ -6,54 +6,13 @@ import Quickshell.Io
 Item {
     id: root
 
-    property var pendingUpdates: []
-    property bool checking: false
     property bool updating: false
     property bool updaterOpen: false
     property string lastChecked: ""
 
-    function checkUpdates() {
-        if (root.checking || checkProcess.running)
-            return ;
-
-        root.checking = true;
-        root.pendingUpdates = [];
-        checkProcess.running = true;
-    }
-
     onUpdaterOpenChanged: updaterWindow.visible = root.updaterOpen
     implicitWidth: updateButton.width
     implicitHeight: updateButton.height
-
-    Timer {
-        id: checkTimer
-
-        interval: 1.8e+06
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: root.checkUpdates()
-    }
-
-    Process {
-        id: checkProcess
-
-        command: ["checkupdates"]
-        onExited: (code, status) => {
-            root.checking = false;
-            root.lastChecked = Qt.formatDateTime(new Date(), "HH:mm");
-        }
-
-        stdout: SplitParser {
-            onRead: (data) => {
-                const line = data.trim();
-                if (line.length > 0)
-                    root.pendingUpdates = root.pendingUpdates.concat([line]);
-
-            }
-        }
-
-    }
 
     Process {
         id: updateProcess
@@ -61,7 +20,7 @@ Item {
         command: ["ghostty", "-e", "sh", "-c", "omarchy update; echo; read -p 'Press enter to close...' _"]
         onExited: (code, status) => {
             root.updating = false;
-            root.checkUpdates();
+            root.lastChecked = Qt.formatDateTime(new Date(), "HH:mm");
         }
     }
 
@@ -79,35 +38,11 @@ Item {
             id: updateIcon
 
             anchors.centerIn: parent
-            text: root.checking ? "" : (root.pendingUpdates.length > 0 ? "" : "")
-            color: root.checking ? "#a6adc8" : (root.pendingUpdates.length > 0 ? "#fab387" : "#a6e3a1")
+            text: ""
+            color: root.updating ? "#a6adc8" : "#cdd6f4"
             font.family: "CaskaydiaMono Nerd Font"
             font.pixelSize: 14
             font.bold: true
-        }
-
-        Rectangle {
-            width: Math.max(14, badgeLabel.implicitWidth + 6)
-            height: 13
-            radius: 7
-            color: "#f38ba8"
-            anchors.top: parent.top
-            anchors.right: parent.right
-            anchors.topMargin: -4
-            anchors.rightMargin: -4
-            visible: root.pendingUpdates.length > 0 && !root.checking
-
-            Text {
-                id: badgeLabel
-
-                anchors.centerIn: parent
-                text: root.pendingUpdates.length > 99 ? "99+" : root.pendingUpdates.length.toString()
-                color: "#11111b"
-                font.family: "CaskaydiaMono Nerd Font"
-                font.pixelSize: 7
-                font.bold: true
-            }
-
         }
 
         MouseArea {
@@ -180,8 +115,8 @@ Item {
                         Text {
                             Layout.fillWidth: true
                             text: {
-                                const status = root.checking ? "Checking for updates..." : (root.pendingUpdates.length > 0 ? root.pendingUpdates.length + " update" + (root.pendingUpdates.length !== 1 ? "s" : "") + " available" : "System is up to date");
-                                return status + (root.lastChecked !== "" ? "  ·  " + root.lastChecked : "");
+                                const status = root.updating ? "Running omarchy update..." : "Run omarchy update in a terminal";
+                                return status + (root.lastChecked !== "" ? "  ·  last run " + root.lastChecked : "");
                             }
                             color: "#a6adc8"
                             elide: Text.ElideRight
@@ -196,7 +131,6 @@ Item {
                         Layout.preferredHeight: 28
                         radius: 6
                         color: refreshArea.containsMouse ? "#313244" : "transparent"
-                        opacity: root.checking ? 0.5 : 1
 
                         Text {
                             anchors.centerIn: parent
@@ -210,10 +144,14 @@ Item {
                             id: refreshArea
 
                             anchors.fill: parent
-                            enabled: !root.checking
+                            enabled: !root.updating
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: root.checkUpdates()
+                            onClicked: {
+                                root.updating = true;
+                                root.updaterOpen = false;
+                                updateProcess.running = true;
+                            }
                         }
 
                     }
@@ -229,49 +167,12 @@ Item {
                 Text {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 38
-                    text: root.checking ? "Checking for updates..." : "System is up to date"
+                    text: root.updating ? "Running omarchy update..." : "No update details loaded"
                     color: "#6c7086"
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
                     font.family: "CaskaydiaMono Nerd Font"
                     font.pixelSize: 12
-                    visible: root.pendingUpdates.length === 0
-                }
-
-                ListView {
-                    id: updateListView
-
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: Math.min(280, contentHeight)
-                    clip: true
-                    spacing: 2
-                    interactive: contentHeight > height
-                    model: root.pendingUpdates
-                    visible: root.pendingUpdates.length > 0
-
-                    delegate: Rectangle {
-                        required property string modelData
-
-                        width: updateListView.width
-                        height: 26
-                        radius: 4
-                        color: "transparent"
-
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.left: parent.left
-                            anchors.leftMargin: 4
-                            anchors.right: parent.right
-                            anchors.rightMargin: 4
-                            text: modelData
-                            color: "#cdd6f4"
-                            elide: Text.ElideRight
-                            font.family: "CaskaydiaMono Nerd Font"
-                            font.pixelSize: 10
-                        }
-
-                    }
-
                 }
 
                 Rectangle {
@@ -280,8 +181,8 @@ Item {
                     radius: 6
                     color: runUpdateArea.containsMouse ? "#313244" : "#1e1e2e"
                     border.width: 1
-                    border.color: root.pendingUpdates.length > 0 ? "#89b4fa" : "#45475a"
-                    opacity: root.updating || root.checking ? 0.6 : 1
+                    border.color: "#89b4fa"
+                    opacity: root.updating ? 0.6 : 1
 
                     Text {
                         anchors.centerIn: parent
@@ -296,7 +197,7 @@ Item {
                         id: runUpdateArea
 
                         anchors.fill: parent
-                        enabled: !root.updating && !root.checking
+                        enabled: !root.updating
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
