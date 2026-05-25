@@ -6,7 +6,7 @@ import "components"
 PanelWindow {
     id: root
 
-    implicitHeight: 26
+    implicitHeight: 30
     color: "#1e1e2e"
 
     anchors {
@@ -59,8 +59,17 @@ PanelWindow {
             }
 
             TaskbarSound {
+                id: taskbarSound
+
                 anchors.right: parent.right
                 anchors.rightMargin: taskbarSystray.width + taskbarBluetooth.width + 8
+                anchors.verticalCenter: parent.verticalCenter
+                panelWindow: root
+            }
+
+            TaskbarSystemUpdate {
+                anchors.right: parent.right
+                anchors.rightMargin: taskbarSystray.width + taskbarBluetooth.width + taskbarSound.width + 12
                 anchors.verticalCenter: parent.verticalCenter
                 panelWindow: root
             }
