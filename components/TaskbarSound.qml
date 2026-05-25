@@ -25,6 +25,9 @@ Item {
         return node.audio !== null;
     }))
     readonly property bool ready: Pipewire.ready && defaultSink !== null && defaultSink.ready && defaultSink.audio !== null
+    readonly property var playbackStreams: Pipewire.nodes.values.filter((node) => {
+        return root.isPlaybackStream(node);
+    })
     readonly property var players: Mpris.players.values.filter((player) => {
         return player.dbusName.indexOf("playerctld") === -1 && (player.trackTitle !== "" || player.identity !== "");
     }).sort((left, right) => {
@@ -34,6 +37,9 @@ Item {
         return root.playerLabel(left).localeCompare(root.playerLabel(right));
     })
     readonly property var activePlayer: root.playerAt(selectedPlayerIndex)
+    readonly property var activePlayerStream: root.streamForPlayer(activePlayer)
+    readonly property bool activePlayerHasStreamVolume: activePlayerStream !== null && activePlayerStream.audio !== null
+    readonly property real activePlayerVolume: activePlayerHasStreamVolume ? activePlayerStream.audio.volume : (activePlayer && activePlayer.volumeSupported ? activePlayer.volume : 0)
 
     function clamp(value, minimum, maximum) {
         return Math.max(minimum, Math.min(maximum, value));
@@ -53,6 +59,47 @@ Item {
         if (node && node.audio)
             node.audio.muted = !node.audio.muted;
 
+    }
+
+    function normalizeText(value) {
+        return (value || "").toString().toLowerCase().replace(/^org\.mpris\.mediaplayer2\./, "").replace(/^org\./, "").replace(/\.instance[0-9]+$/, "").replace(/[^a-z0-9]+/g, "");
+    }
+
+    function isPlaybackStream(node) {
+        if (!node.ready || !node.isStream || node.audio === null)
+            return false;
+
+        const properties = node.properties || {
+        };
+        const mediaClass = properties["media.class"] || "";
+        if (mediaClass.indexOf("Internal") !== -1 || mediaClass.indexOf("Input") !== -1)
+            return false;
+
+        return properties["application.name"] || properties["application.process.binary"] || properties["media.name"] || properties["media.title"];
+    }
+
+    function streamForPlayer(player) {
+        if (!player)
+            return null;
+
+        const playerCandidates = [root.normalizeText(player.identity), root.normalizeText(player.desktopEntry), root.normalizeText(player.dbusName), root.normalizeText(player.trackTitle)].filter((value) => {
+            return value.length > 0;
+        });
+        for (const stream of root.playbackStreams) {
+            const properties = stream.properties || {
+            };
+            const streamCandidates = [root.normalizeText(properties["application.name"]), root.normalizeText(properties["application.process.binary"]), root.normalizeText(properties["media.name"]), root.normalizeText(properties["media.title"]), root.normalizeText(stream.description), root.normalizeText(stream.name)].filter((value) => {
+                return value.length > 0;
+            });
+            for (const playerCandidate of playerCandidates) {
+                for (const streamCandidate of streamCandidates) {
+                    if (playerCandidate.indexOf(streamCandidate) !== -1 || streamCandidate.indexOf(playerCandidate) !== -1)
+                        return stream;
+
+                }
+            }
+        }
+        return null;
     }
 
     function deviceLabel(node) {
@@ -104,9 +151,10 @@ Item {
     }
 
     function setPlayerVolume(player, value) {
-        if (player && player.volumeSupported)
+        if (root.activePlayerStream !== null && player === root.activePlayer)
+            root.setNodeVolume(root.activePlayerStream, value);
+        else if (player && player.volumeSupported)
             player.volume = root.clamp(value, 0, 1.5);
-
     }
 
     function selectPreviousPlayer() {
@@ -529,7 +577,7 @@ Item {
                                     }
 
                                     Text {
-                                        text: root.activePlayer && root.activePlayer.volumeSupported ? root.percent(root.activePlayer.volume) + "%" : (root.activePlayer ? root.playerLabel(root.activePlayer) : "MPRIS")
+                                        text: root.activePlayer && (root.activePlayerHasStreamVolume || root.activePlayer.volumeSupported) ? root.percent(root.activePlayerVolume) + "%" : (root.activePlayer ? root.playerLabel(root.activePlayer) : "MPRIS")
                                         color: "#6c7086"
                                         elide: Text.ElideRight
                                         font.family: "CaskaydiaMono Nerd Font"
@@ -542,11 +590,11 @@ Item {
                                     Layout.fillWidth: true
                                     Layout.preferredHeight: 18
                                     spacing: 8
-                                    visible: root.activePlayer !== null && root.activePlayer.volumeSupported
+                                    visible: root.activePlayer !== null && (root.activePlayerHasStreamVolume || root.activePlayer.volumeSupported)
 
                                     Text {
                                         Layout.preferredWidth: 24
-                                        text: "\uf001"
+                                        text: root.activePlayerHasStreamVolume ? "\uf028" : "\uf001"
                                         color: "#cdd6f4"
                                         horizontalAlignment: Text.AlignHCenter
                                         verticalAlignment: Text.AlignVCenter
@@ -563,7 +611,7 @@ Item {
                                         color: "#313244"
 
                                         Rectangle {
-                                            width: parent.width * root.clamp(root.activePlayer ? root.activePlayer.volume / 1.5 : 0, 0, 1)
+                                            width: parent.width * root.clamp(root.activePlayerVolume / 1.5, 0, 1)
                                             height: parent.height
                                             radius: parent.radius
                                             color: "#89b4fa"
@@ -571,7 +619,7 @@ Item {
 
                                         MouseArea {
                                             anchors.fill: parent
-                                            enabled: root.activePlayer !== null && root.activePlayer.volumeSupported
+                                            enabled: root.activePlayer !== null && (root.activePlayerHasStreamVolume || root.activePlayer.volumeSupported)
                                             cursorShape: Qt.PointingHandCursor
                                             onClicked: (mouse) => {
                                                 return root.setPlayerVolume(root.activePlayer, mouse.x / width * 1.5);
