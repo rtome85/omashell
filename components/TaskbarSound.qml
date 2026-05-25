@@ -329,7 +329,7 @@ Item {
 
                 VolumeRow {
                     Layout.fillWidth: true
-                    label: "Output"
+                    label: "MASTER VOLUME"
                     subtitle: root.ready ? (root.defaultSink.description || root.defaultSink.nickname || root.defaultSink.name) : "PipeWire output unavailable"
                     node: root.defaultSink
                     enabled: root.ready
@@ -353,7 +353,7 @@ Item {
 
                     Text {
                         Layout.fillWidth: true
-                        text: "Output device"
+                        text: "OUTPUT DEVICE"
                         color: "#a6adc8"
                         elide: Text.ElideRight
                         font.family: "CaskaydiaMono Nerd Font"
@@ -382,7 +382,7 @@ Item {
                             Layout.fillWidth: true
                             glyph: "\uf028"
                             label: root.deviceLabel(modelData)
-                            subtitle: root.deviceSubtitle(modelData)
+                            // subtitle: root.deviceSubtitle(modelData)
                             selected: root.isSelectedDevice(modelData, root.defaultSink)
                             node: modelData
                             onSelectDevice: (node) => {
@@ -400,7 +400,7 @@ Item {
 
                     Text {
                         Layout.fillWidth: true
-                        text: "Input device"
+                        text: "INPUT DEVICE"
                         color: "#a6adc8"
                         elide: Text.ElideRight
                         font.family: "CaskaydiaMono Nerd Font"
@@ -429,7 +429,7 @@ Item {
                             Layout.fillWidth: true
                             glyph: "\uf130"
                             label: root.deviceLabel(modelData)
-                            subtitle: root.deviceSubtitle(modelData)
+                            // subtitle: root.deviceSubtitle(modelData)
                             selected: root.isSelectedDevice(modelData, root.defaultSource)
                             node: modelData
                             onSelectDevice: (node) => {
@@ -453,7 +453,7 @@ Item {
 
                     Text {
                         Layout.fillWidth: true
-                        text: "Now playing"
+                        text: "NOW PLAYING"
                         color: "#a6adc8"
                         elide: Text.ElideRight
                         font.family: "CaskaydiaMono Nerd Font"
