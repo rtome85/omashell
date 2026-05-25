@@ -39,7 +39,7 @@ Item {
     })
     readonly property var activePlayer: players.length > 0 ? players[0] : null
     readonly property var appPlayers: players.filter((player) => {
-        return player.volumeSupported && player.dbusName.indexOf("playerctld") === -1;
+        return player.volumeSupported && player.dbusName.indexOf("playerctld") === -1 && !root.isActivePlayer(player);
     })
     readonly property int appControlCount: appStreams.length + appPlayers.length
 
@@ -120,6 +120,10 @@ Item {
 
     function playerLabel(player) {
         return player.identity || player.desktopEntry || "Media player";
+    }
+
+    function isActivePlayer(player) {
+        return root.activePlayer !== null && player !== null && player.dbusName === root.activePlayer.dbusName;
     }
 
     function playerVolumeSubtitle(player) {
@@ -430,7 +434,7 @@ Item {
 
                     Rectangle {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 74
+                        Layout.preferredHeight: 106
                         radius: 6
                         color: "#181825"
                         border.width: 1
@@ -517,11 +521,60 @@ Item {
                                     }
 
                                     Text {
-                                        text: root.activePlayer ? root.playerLabel(root.activePlayer) : "MPRIS"
+                                        text: root.activePlayer && root.activePlayer.volumeSupported ? root.percent(root.activePlayer.volume) + "%" : (root.activePlayer ? root.playerLabel(root.activePlayer) : "MPRIS")
                                         color: "#6c7086"
                                         elide: Text.ElideRight
                                         font.family: "CaskaydiaMono Nerd Font"
                                         font.pixelSize: 9
+                                    }
+
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 18
+                                    spacing: 8
+                                    visible: root.activePlayer !== null && root.activePlayer.volumeSupported
+
+                                    Text {
+                                        Layout.preferredWidth: 24
+                                        text: "\uf001"
+                                        color: "#cdd6f4"
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                        font.family: "CaskaydiaMono Nerd Font"
+                                        font.pixelSize: 9
+                                    }
+
+                                    Rectangle {
+                                        id: nowPlayingVolumeTrack
+
+                                        Layout.fillWidth: true
+                                        Layout.preferredHeight: 8
+                                        radius: 4
+                                        color: "#313244"
+
+                                        Rectangle {
+                                            width: parent.width * root.clamp(root.activePlayer ? root.activePlayer.volume / 1.5 : 0, 0, 1)
+                                            height: parent.height
+                                            radius: parent.radius
+                                            color: "#89b4fa"
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            enabled: root.activePlayer !== null && root.activePlayer.volumeSupported
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: (mouse) => {
+                                                return root.setPlayerVolume(root.activePlayer, mouse.x / width * 1.5);
+                                            }
+                                            onPositionChanged: (mouse) => {
+                                                if (pressed)
+                                                    root.setPlayerVolume(root.activePlayer, mouse.x / width * 1.5);
+
+                                            }
+                                        }
+
                                     }
 
                                 }
