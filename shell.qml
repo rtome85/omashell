@@ -40,6 +40,13 @@ PanelWindow {
         Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
+
+            TaskbarSystray {
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                panelWindow: root
+            }
+
         }
 
     }
