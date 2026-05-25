@@ -9,8 +9,19 @@ Item {
 
     required property QtObject panelWindow
     readonly property var defaultSink: Pipewire.defaultAudioSink
-    readonly property var trackedNodes: [defaultSink].concat(Pipewire.nodes.values.filter((node) => {
-        return node.isStream && !node.isSink && node.audio !== null;
+    readonly property var defaultSource: Pipewire.defaultAudioSource
+    readonly property var outputDevices: Pipewire.nodes.values.filter((node) => {
+        return node.ready && !node.isStream && node.isSink && node.audio !== null;
+    }).sort((left, right) => {
+        return root.deviceLabel(left).localeCompare(root.deviceLabel(right));
+    })
+    readonly property var inputDevices: Pipewire.nodes.values.filter((node) => {
+        return node.ready && !node.isStream && !node.isSink && node.audio !== null;
+    }).sort((left, right) => {
+        return root.deviceLabel(left).localeCompare(root.deviceLabel(right));
+    })
+    readonly property var trackedNodes: [defaultSink, defaultSource].concat(Pipewire.nodes.values.filter((node) => {
+        return node.audio !== null;
     }))
     readonly property bool ready: Pipewire.ready && defaultSink !== null && defaultSink.ready && defaultSink.audio !== null
     readonly property var appStreams: Pipewire.nodes.values.filter((node) => {
@@ -58,6 +69,36 @@ Item {
         const properties = node.properties || {
         };
         return properties["media.name"] || properties["application.process.binary"] || node.description || "Application audio";
+    }
+
+    function deviceLabel(node) {
+        if (!node)
+            return "Unavailable";
+
+        return node.description || node.nickname || node.name || "Audio device";
+    }
+
+    function deviceSubtitle(node) {
+        if (!node)
+            return "";
+
+        return node.nickname || node.name || "";
+    }
+
+    function isSelectedDevice(node, selectedNode) {
+        return node !== null && selectedNode !== null && node.id === selectedNode.id;
+    }
+
+    function selectOutputDevice(node) {
+        if (node)
+            Pipewire.preferredDefaultAudioSink = node;
+
+    }
+
+    function selectInputDevice(node) {
+        if (node)
+            Pipewire.preferredDefaultAudioSource = node;
+
     }
 
     function playerLabel(player) {
@@ -135,7 +176,7 @@ Item {
         id: soundPopup
 
         implicitWidth: 340
-        implicitHeight: Math.min(456, soundPopupContent.implicitHeight + 24)
+        implicitHeight: Math.min(560, soundPopupContent.implicitHeight + 24)
         visible: false
         color: "transparent"
         grabFocus: true
@@ -234,6 +275,106 @@ Item {
                     onToggleMute: (node) => {
                         return root.toggleNodeMute(node);
                     }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 1
+                    color: "#313244"
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 6
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: "Output device"
+                        color: "#a6adc8"
+                        elide: Text.ElideRight
+                        font.family: "CaskaydiaMono Nerd Font"
+                        font.pixelSize: 11
+                        font.bold: true
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 24
+                        text: "No output devices"
+                        color: "#6c7086"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.family: "CaskaydiaMono Nerd Font"
+                        font.pixelSize: 11
+                        visible: root.outputDevices.length === 0
+                    }
+
+                    Repeater {
+                        model: root.outputDevices
+
+                        DeviceRow {
+                            required property var modelData
+
+                            Layout.fillWidth: true
+                            glyph: "\uf028"
+                            label: root.deviceLabel(modelData)
+                            subtitle: root.deviceSubtitle(modelData)
+                            selected: root.isSelectedDevice(modelData, root.defaultSink)
+                            node: modelData
+                            onSelectDevice: (node) => {
+                                return root.selectOutputDevice(node);
+                            }
+                        }
+
+                    }
+
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 6
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: "Input device"
+                        color: "#a6adc8"
+                        elide: Text.ElideRight
+                        font.family: "CaskaydiaMono Nerd Font"
+                        font.pixelSize: 11
+                        font.bold: true
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 24
+                        text: "No input devices"
+                        color: "#6c7086"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.family: "CaskaydiaMono Nerd Font"
+                        font.pixelSize: 11
+                        visible: root.inputDevices.length === 0
+                    }
+
+                    Repeater {
+                        model: root.inputDevices
+
+                        DeviceRow {
+                            required property var modelData
+
+                            Layout.fillWidth: true
+                            glyph: "\uf130"
+                            label: root.deviceLabel(modelData)
+                            subtitle: root.deviceSubtitle(modelData)
+                            selected: root.isSelectedDevice(modelData, root.defaultSource)
+                            node: modelData
+                            onSelectDevice: (node) => {
+                                return root.selectInputDevice(node);
+                            }
+                        }
+
+                    }
+
                 }
 
                 Rectangle {
@@ -419,6 +560,80 @@ Item {
 
             }
 
+        }
+
+    }
+
+    component DeviceRow: Rectangle {
+        id: deviceRow
+
+        property string glyph: ""
+        property string label: ""
+        property string subtitle: ""
+        property bool selected: false
+        property var node: null
+
+        signal selectDevice(var node)
+
+        implicitHeight: 34
+        height: implicitHeight
+        radius: 6
+        color: deviceArea.containsMouse ? "#313244" : "transparent"
+        border.width: selected ? 1 : 0
+        border.color: "#89b4fa"
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 8
+            anchors.rightMargin: 8
+            spacing: 8
+
+            Text {
+                Layout.preferredWidth: 20
+                text: deviceRow.selected ? "\uf00c" : deviceRow.glyph
+                color: deviceRow.selected ? "#a6e3a1" : "#cdd6f4"
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                font.family: "CaskaydiaMono Nerd Font"
+                font.pixelSize: 11
+                font.bold: true
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 1
+
+                Text {
+                    Layout.fillWidth: true
+                    text: deviceRow.label
+                    color: "#cdd6f4"
+                    elide: Text.ElideRight
+                    font.family: "CaskaydiaMono Nerd Font"
+                    font.pixelSize: 11
+                    font.bold: true
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    text: deviceRow.subtitle
+                    color: "#6c7086"
+                    elide: Text.ElideRight
+                    font.family: "CaskaydiaMono Nerd Font"
+                    font.pixelSize: 9
+                    visible: deviceRow.subtitle !== ""
+                }
+
+            }
+
+        }
+
+        MouseArea {
+            id: deviceArea
+
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: deviceRow.selectDevice(deviceRow.node)
         }
 
     }
