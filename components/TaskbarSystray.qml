@@ -9,7 +9,6 @@ Item {
 
     required property QtObject panelWindow
     readonly property int itemCount: SystemTray.items.values.length
-    readonly property string buttonIcon: Quickshell.hasThemeIcon("view-app-grid-symbolic") ? Quickshell.iconPath("view-app-grid-symbolic") : (Quickshell.hasThemeIcon("view-grid-symbolic") ? Quickshell.iconPath("view-grid-symbolic") : "")
 
     implicitWidth: systrayButton.width
     implicitHeight: systrayButton.height
@@ -25,22 +24,13 @@ Item {
         border.color: "#cdd6f4"
         opacity: root.itemCount > 0 ? 1 : 0.55
 
-        IconImage {
-            anchors.centerIn: parent
-            width: 15
-            height: 15
-            source: root.buttonIcon
-            visible: root.buttonIcon !== ""
-        }
-
         Text {
             anchors.centerIn: parent
-            text: "^"
+            text: "\uf00a"
             color: "#cdd6f4"
             font.family: "CaskaydiaMono Nerd Font"
-            font.pixelSize: 15
+            font.pixelSize: 14
             font.bold: true
-            visible: root.buttonIcon === ""
         }
 
         MouseArea {
