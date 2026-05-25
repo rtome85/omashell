@@ -36,6 +36,7 @@ timeout 3s quickshell --path /home/roberto/Work/projects/omashell --no-color
 - Pass only required shell-level references from `shell.qml`, such as the `PanelWindow` needed for popup anchoring.
 - Avoid moving unrelated behavior while implementing a feature.
 - Prefer small, direct QML components over premature shared abstractions.
+- Use `CaskaydiaMono Nerd Font` glyphs for taskbar button icons when a simple symbolic icon is needed.
 
 ## Quickshell Notes
 
