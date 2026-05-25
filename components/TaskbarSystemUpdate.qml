@@ -125,18 +125,29 @@ Item {
         implicitHeight: contentRect.implicitHeight
         visible: false
         title: "System Updater"
-        onVisibleChanged: root.updaterOpen = visible
+        onVisibleChanged: {
+            root.updaterOpen = visible;
+            if (visible)
+                contentRect.forceActiveFocus();
+
+        }
 
         Rectangle {
             id: contentRect
 
             width: parent.width
             implicitHeight: updaterWindowContent.implicitHeight + 24
-            radius: 8
+            radius: 0
             color: "#1e1e2e"
             border.width: 1
             border.color: "#45475a"
-            clip: true
+            focus: true
+            Keys.onPressed: (event) => {
+                if (event.key === Qt.Key_Q) {
+                    root.updaterOpen = false;
+                    event.accepted = true;
+                }
+            }
 
             ColumnLayout {
                 id: updaterWindowContent
