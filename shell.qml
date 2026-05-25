@@ -50,8 +50,17 @@ PanelWindow {
             }
 
             TaskbarBluetooth {
+                id: taskbarBluetooth
+
                 anchors.right: parent.right
                 anchors.rightMargin: taskbarSystray.width + 4
+                anchors.verticalCenter: parent.verticalCenter
+                panelWindow: root
+            }
+
+            TaskbarSound {
+                anchors.right: parent.right
+                anchors.rightMargin: taskbarSystray.width + taskbarBluetooth.width + 8
                 anchors.verticalCenter: parent.verticalCenter
                 panelWindow: root
             }
