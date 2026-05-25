@@ -108,11 +108,6 @@ Item {
         visible: false
         color: "transparent"
         grabFocus: true
-        onVisibleChanged: {
-            if (root.available && root.active)
-                root.adapter.discovering = visible;
-
-        }
 
         anchor {
             window: root.panelWindow
