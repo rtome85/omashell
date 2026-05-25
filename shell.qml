@@ -3,83 +3,92 @@ import QtQuick.Layouts
 import Quickshell
 import "components"
 
-PanelWindow {
-    id: root
+Variants {
+    model: Quickshell.screens
 
-    implicitHeight: 30
-    color: "#1e1e2e"
+    PanelWindow {
+        id: root
 
-    anchors {
-        top: true
-        left: true
-        right: true
-    }
+        required property var modelData
 
-    RowLayout {
-        anchors.fill: parent
-        anchors.leftMargin: 8
-        anchors.rightMargin: 8
-        spacing: 0
+        screen: modelData
+        implicitHeight: 30
+        color: "#1e1e2e"
 
-        Item {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-
-            WorkspaceSwitcher {
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
+        anchors {
+            top: true
+            left: true
+            right: true
         }
 
-        TaskbarCalendar {
-            Layout.alignment: Qt.AlignCenter
-            panelWindow: root
-        }
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 8
+            anchors.rightMargin: 8
+            spacing: 0
 
-        Item {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
 
-            TaskbarSystray {
-                id: taskbarSystray
+                WorkspaceSwitcher {
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    screen: root.screen
+                }
 
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            TaskbarCalendar {
+                Layout.alignment: Qt.AlignCenter
                 panelWindow: root
             }
 
-            TaskbarBluetooth {
-                id: taskbarBluetooth
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
 
-                anchors.right: parent.right
-                anchors.rightMargin: taskbarSystray.width + 4
-                anchors.verticalCenter: parent.verticalCenter
-                panelWindow: root
-            }
+                TaskbarSystray {
+                    id: taskbarSystray
 
-            TaskbarSound {
-                id: taskbarSound
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    panelWindow: root
+                }
 
-                anchors.right: parent.right
-                anchors.rightMargin: taskbarSystray.width + taskbarBluetooth.width + 8
-                anchors.verticalCenter: parent.verticalCenter
-                panelWindow: root
-            }
+                TaskbarBluetooth {
+                    id: taskbarBluetooth
 
-            TaskbarNotifications {
-                id: taskbarNotifications
+                    anchors.right: parent.right
+                    anchors.rightMargin: taskbarSystray.width + 4
+                    anchors.verticalCenter: parent.verticalCenter
+                    panelWindow: root
+                }
 
-                anchors.right: parent.right
-                anchors.rightMargin: taskbarSystray.width + taskbarBluetooth.width + taskbarSound.width + 12
-                anchors.verticalCenter: parent.verticalCenter
-                panelWindow: root
-            }
+                TaskbarSound {
+                    id: taskbarSound
 
-            TaskbarSystemUpdate {
-                anchors.right: parent.right
-                anchors.rightMargin: taskbarSystray.width + taskbarBluetooth.width + taskbarSound.width + taskbarNotifications.width + 16
-                anchors.verticalCenter: parent.verticalCenter
+                    anchors.right: parent.right
+                    anchors.rightMargin: taskbarSystray.width + taskbarBluetooth.width + 8
+                    anchors.verticalCenter: parent.verticalCenter
+                    panelWindow: root
+                }
+
+                TaskbarNotifications {
+                    id: taskbarNotifications
+
+                    anchors.right: parent.right
+                    anchors.rightMargin: taskbarSystray.width + taskbarBluetooth.width + taskbarSound.width + 12
+                    anchors.verticalCenter: parent.verticalCenter
+                    panelWindow: root
+                }
+
+                TaskbarSystemUpdate {
+                    anchors.right: parent.right
+                    anchors.rightMargin: taskbarSystray.width + taskbarBluetooth.width + taskbarSound.width + taskbarNotifications.width + 16
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+
             }
 
         }

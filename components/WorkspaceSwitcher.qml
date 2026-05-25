@@ -4,17 +4,19 @@ import Quickshell.Hyprland
 Item {
     id: root
 
+    property var screen
     readonly property int workspaceLimit: 10
-    readonly property int focusedWorkspaceId: Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : 0
+    readonly property var monitor: root.screen ? Hyprland.monitorFor(root.screen) : null
+    readonly property int activeWorkspaceId: root.monitor && root.monitor.activeWorkspace ? root.monitor.activeWorkspace.id : 0
     readonly property var visibleWorkspaceIds: {
         const ids = [];
         for (const workspace of Hyprland.workspaces.values) {
-            if (workspace.id > 0 && workspace.id <= root.workspaceLimit)
+            if (workspace.monitor === root.monitor && workspace.id > 0 && workspace.id <= root.workspaceLimit)
                 ids.push(workspace.id);
 
         }
-        if (root.focusedWorkspaceId > 0 && root.focusedWorkspaceId <= root.workspaceLimit && ids.indexOf(root.focusedWorkspaceId) === -1)
-            ids.push(root.focusedWorkspaceId);
+        if (root.activeWorkspaceId > 0 && root.activeWorkspaceId <= root.workspaceLimit && ids.indexOf(root.activeWorkspaceId) === -1)
+            ids.push(root.activeWorkspaceId);
 
         return ids.sort((left, right) => {
             return left - right;
@@ -23,7 +25,7 @@ Item {
 
     function workspaceById(id) {
         return Hyprland.workspaces.values.find((workspace) => {
-            return workspace.id === id;
+            return workspace.monitor === root.monitor && workspace.id === id;
         });
     }
 
@@ -45,7 +47,7 @@ Item {
 
                 readonly property int workspaceId: modelData
                 readonly property var workspace: root.workspaceById(workspaceId)
-                readonly property bool active: root.focusedWorkspaceId === workspaceId
+                readonly property bool active: root.activeWorkspaceId === workspaceId
 
                 width: Math.max(21, label.implicitWidth + 13)
                 height: 22
