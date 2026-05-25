@@ -71,7 +71,6 @@ PanelWindow {
                 anchors.right: parent.right
                 anchors.rightMargin: taskbarSystray.width + taskbarBluetooth.width + taskbarSound.width + 12
                 anchors.verticalCenter: parent.verticalCenter
-                panelWindow: root
             }
 
         }

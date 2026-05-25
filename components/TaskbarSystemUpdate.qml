@@ -6,7 +6,6 @@ import Quickshell.Io
 Item {
     id: root
 
-    required property QtObject panelWindow
     property var pendingUpdates: []
     property bool checking: false
     property bool updating: false
@@ -70,8 +69,8 @@ Item {
         width: Math.max(30, updateIcon.implicitWidth + 16)
         height: 22
         radius: 6
-        color: updatePopup.visible ? "#313244" : "transparent"
-        border.width: updatePopup.visible ? 1 : 0
+        color: updaterWindow.visible ? "#313244" : "transparent"
+        border.width: updaterWindow.visible ? 1 : 0
         border.color: "#cdd6f4"
 
         Text {
@@ -112,26 +111,18 @@ Item {
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
-            onClicked: updatePopup.visible = !updatePopup.visible
+            onClicked: updaterWindow.visible = !updaterWindow.visible
         }
 
     }
 
-    PopupWindow {
-        id: updatePopup
+    FloatingWindow {
+        id: updaterWindow
 
-        implicitWidth: 340
-        implicitHeight: Math.min(480, updatePopupContent.implicitHeight + 24)
+        implicitWidth: 400
+        implicitHeight: 520
         visible: false
-        color: "transparent"
-        grabFocus: true
-
-        anchor {
-            window: root.panelWindow
-            rect.x: Math.round(root.panelWindow.width - updatePopup.width - 120)
-            rect.y: root.panelWindow.height + 6
-            adjustment: PopupAdjustment.SlideX | PopupAdjustment.ResizeY
-        }
+        title: "System Updater"
 
         Rectangle {
             anchors.fill: parent
@@ -142,7 +133,7 @@ Item {
             clip: true
 
             ColumnLayout {
-                id: updatePopupContent
+                id: updaterWindowContent
 
                 anchors.fill: parent
                 anchors.margins: 12
@@ -291,7 +282,7 @@ Item {
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
                             root.updating = true;
-                            updatePopup.visible = false;
+                            updaterWindow.visible = false;
                             updateProcess.running = true;
                         }
                     }
