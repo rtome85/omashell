@@ -8,7 +8,7 @@ Item {
     id: root
 
     required property QtObject panelWindow
-    property int selectedPlayerIndex: 0
+    property string expandedPlayerKey: ""
     readonly property var defaultSink: Pipewire.defaultAudioSink
     readonly property var defaultSource: Pipewire.defaultAudioSource
     readonly property var outputDevices: Pipewire.nodes.values.filter((node) => {
@@ -36,10 +36,6 @@ Item {
 
         return root.playerLabel(left).localeCompare(root.playerLabel(right));
     })
-    readonly property var activePlayer: root.playerAt(selectedPlayerIndex)
-    readonly property var activePlayerStream: root.streamForPlayer(activePlayer)
-    readonly property bool activePlayerHasStreamVolume: activePlayerStream !== null && activePlayerStream.audio !== null
-    readonly property real activePlayerVolume: activePlayerHasStreamVolume ? activePlayerStream.audio.volume : (activePlayer && activePlayer.volumeSupported ? activePlayer.volume : 0)
 
     function clamp(value, minimum, maximum) {
         return Math.max(minimum, Math.min(maximum, value));
@@ -136,37 +132,41 @@ Item {
         return player.identity || player.desktopEntry || "Media player";
     }
 
-    function playerAt(index) {
-        if (root.players.length === 0)
-            return null;
-
-        return root.players[Math.round(root.clamp(index, 0, root.players.length - 1))];
+    function playerKey(player) {
+        return player ? player.dbusName : "";
     }
 
-    function selectedPlayerOrdinal() {
-        if (root.players.length === 0)
-            return 0;
+    function togglePlayerExpanded(player) {
+        const key = root.playerKey(player);
+        root.expandedPlayerKey = root.expandedPlayerKey === key ? "" : key;
+    }
 
-        return Math.round(root.clamp(root.selectedPlayerIndex, 0, root.players.length - 1)) + 1;
+    function playerStream(player) {
+        return root.streamForPlayer(player);
+    }
+
+    function playerHasStreamVolume(player) {
+        const stream = root.playerStream(player);
+        return stream !== null && stream.audio !== null;
+    }
+
+    function playerVolume(player) {
+        const stream = root.playerStream(player);
+        if (stream !== null && stream.audio !== null)
+            return stream.audio.volume;
+
+        if (player && player.volumeSupported)
+            return player.volume;
+
+        return 0;
     }
 
     function setPlayerVolume(player, value) {
-        if (root.activePlayerStream !== null && player === root.activePlayer)
-            root.setNodeVolume(root.activePlayerStream, value);
+        const stream = root.playerStream(player);
+        if (stream !== null && stream.audio !== null)
+            root.setNodeVolume(stream, value);
         else if (player && player.volumeSupported)
             player.volume = root.clamp(value, 0, 1.5);
-    }
-
-    function selectPreviousPlayer() {
-        if (root.players.length > 0)
-            root.selectedPlayerIndex = (root.selectedPlayerIndex + root.players.length - 1) % root.players.length;
-
-    }
-
-    function selectNextPlayer() {
-        if (root.players.length > 0)
-            root.selectedPlayerIndex = (root.selectedPlayerIndex + 1) % root.players.length;
-
     }
 
     function trackTitle(player) {
@@ -451,192 +451,43 @@ Item {
                     Layout.fillWidth: true
                     spacing: 8
 
-                    RowLayout {
+                    Text {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 24
-                        spacing: 6
-
-                        Text {
-                            Layout.fillWidth: true
-                            text: "Now playing"
-                            color: "#a6adc8"
-                            elide: Text.ElideRight
-                            font.family: "CaskaydiaMono Nerd Font"
-                            font.pixelSize: 11
-                            font.bold: true
-                        }
-
-                        Text {
-                            text: root.selectedPlayerOrdinal() + "/" + root.players.length
-                            color: "#6c7086"
-                            font.family: "CaskaydiaMono Nerd Font"
-                            font.pixelSize: 9
-                            visible: root.players.length > 1
-                        }
-
-                        MediaButton {
-                            glyph: "\uf053"
-                            enabled: root.players.length > 1
-                            onClicked: root.selectPreviousPlayer()
-                        }
-
-                        MediaButton {
-                            glyph: "\uf054"
-                            enabled: root.players.length > 1
-                            onClicked: root.selectNextPlayer()
-                        }
-
+                        text: "Now playing"
+                        color: "#a6adc8"
+                        elide: Text.ElideRight
+                        font.family: "CaskaydiaMono Nerd Font"
+                        font.pixelSize: 11
+                        font.bold: true
                     }
 
-                    Rectangle {
+                    Text {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 106
-                        radius: 6
-                        color: "#181825"
-                        border.width: 1
-                        border.color: "#313244"
+                        Layout.preferredHeight: 32
+                        text: "No active media apps"
+                        color: "#6c7086"
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        font.family: "CaskaydiaMono Nerd Font"
+                        font.pixelSize: 12
+                        visible: root.players.length === 0
+                    }
 
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.margins: 8
-                            spacing: 8
+                    Repeater {
+                        model: root.players
 
-                            Rectangle {
-                                Layout.preferredWidth: 48
-                                Layout.preferredHeight: 48
-                                radius: 6
-                                color: "#313244"
-                                clip: true
+                        MediaPlayerRow {
+                            required property var modelData
 
-                                Image {
-                                    anchors.fill: parent
-                                    source: root.activePlayer ? root.activePlayer.trackArtUrl : ""
-                                    fillMode: Image.PreserveAspectCrop
-                                    visible: source !== ""
-                                }
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "\uf001"
-                                    color: "#cdd6f4"
-                                    font.family: "CaskaydiaMono Nerd Font"
-                                    font.pixelSize: 17
-                                    visible: !root.activePlayer || root.activePlayer.trackArtUrl === ""
-                                }
-
+                            Layout.fillWidth: true
+                            player: modelData
+                            expanded: root.expandedPlayerKey === root.playerKey(modelData)
+                            onToggleExpanded: (player) => {
+                                return root.togglePlayerExpanded(player);
                             }
-
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 2
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: root.trackTitle(root.activePlayer)
-                                    color: "#cdd6f4"
-                                    elide: Text.ElideRight
-                                    font.family: "CaskaydiaMono Nerd Font"
-                                    font.pixelSize: 12
-                                    font.bold: true
-                                }
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: root.trackSubtitle(root.activePlayer)
-                                    color: "#a6adc8"
-                                    elide: Text.ElideRight
-                                    font.family: "CaskaydiaMono Nerd Font"
-                                    font.pixelSize: 10
-                                }
-
-                                RowLayout {
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: 24
-                                    spacing: 6
-
-                                    MediaButton {
-                                        glyph: "\uf048"
-                                        enabled: root.activePlayer !== null && root.activePlayer.canGoPrevious
-                                        onClicked: root.activePlayer.previous()
-                                    }
-
-                                    MediaButton {
-                                        glyph: root.activePlayer && root.activePlayer.isPlaying ? "\uf04c" : "\uf04b"
-                                        enabled: root.activePlayer !== null && root.activePlayer.canTogglePlaying
-                                        onClicked: root.activePlayer.togglePlaying()
-                                    }
-
-                                    MediaButton {
-                                        glyph: "\uf051"
-                                        enabled: root.activePlayer !== null && root.activePlayer.canGoNext
-                                        onClicked: root.activePlayer.next()
-                                    }
-
-                                    Item {
-                                        Layout.fillWidth: true
-                                    }
-
-                                    Text {
-                                        text: root.activePlayer && (root.activePlayerHasStreamVolume || root.activePlayer.volumeSupported) ? root.percent(root.activePlayerVolume) + "%" : (root.activePlayer ? root.playerLabel(root.activePlayer) : "MPRIS")
-                                        color: "#6c7086"
-                                        elide: Text.ElideRight
-                                        font.family: "CaskaydiaMono Nerd Font"
-                                        font.pixelSize: 9
-                                    }
-
-                                }
-
-                                RowLayout {
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: 18
-                                    spacing: 8
-                                    visible: root.activePlayer !== null && (root.activePlayerHasStreamVolume || root.activePlayer.volumeSupported)
-
-                                    Text {
-                                        Layout.preferredWidth: 24
-                                        text: root.activePlayerHasStreamVolume ? "\uf028" : "\uf001"
-                                        color: "#cdd6f4"
-                                        horizontalAlignment: Text.AlignHCenter
-                                        verticalAlignment: Text.AlignVCenter
-                                        font.family: "CaskaydiaMono Nerd Font"
-                                        font.pixelSize: 9
-                                    }
-
-                                    Rectangle {
-                                        id: nowPlayingVolumeTrack
-
-                                        Layout.fillWidth: true
-                                        Layout.preferredHeight: 8
-                                        radius: 4
-                                        color: "#313244"
-
-                                        Rectangle {
-                                            width: parent.width * root.clamp(root.activePlayerVolume / 1.5, 0, 1)
-                                            height: parent.height
-                                            radius: parent.radius
-                                            color: "#89b4fa"
-                                        }
-
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            enabled: root.activePlayer !== null && (root.activePlayerHasStreamVolume || root.activePlayer.volumeSupported)
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: (mouse) => {
-                                                return root.setPlayerVolume(root.activePlayer, mouse.x / width * 1.5);
-                                            }
-                                            onPositionChanged: (mouse) => {
-                                                if (pressed)
-                                                    root.setPlayerVolume(root.activePlayer, mouse.x / width * 1.5);
-
-                                            }
-                                        }
-
-                                    }
-
-                                }
-
+                            onSetVolume: (player, value) => {
+                                return root.setPlayerVolume(player, value);
                             }
-
                         }
 
                     }
@@ -751,6 +602,247 @@ Item {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: parent.clicked()
+        }
+
+    }
+
+    component MediaPlayerRow: Rectangle {
+        id: mediaPlayerRow
+
+        property var player: null
+        property bool expanded: false
+        readonly property bool hasVolume: player !== null && (root.playerHasStreamVolume(player) || player.volumeSupported)
+        readonly property real volume: root.playerVolume(player)
+
+        signal toggleExpanded(var player)
+        signal setVolume(var player, real value)
+
+        implicitHeight: headerRow.implicitHeight + (expanded ? expandedCard.implicitHeight + 6 : 0)
+        height: implicitHeight
+        radius: 6
+        color: expanded ? "#181825" : (mediaPlayerHover.hovered ? "#313244" : "transparent")
+        border.width: expanded ? 1 : 0
+        border.color: "#313244"
+
+        HoverHandler {
+            id: mediaPlayerHover
+        }
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: expanded ? 8 : 0
+            spacing: 6
+
+            RowLayout {
+                id: headerRow
+
+                Layout.fillWidth: true
+                Layout.preferredHeight: 34
+                spacing: 8
+
+                Rectangle {
+                    Layout.preferredWidth: 24
+                    Layout.preferredHeight: 24
+                    radius: 6
+                    color: disclosureArea.containsMouse ? "#45475a" : "#313244"
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "\uf053"
+                        rotation: mediaPlayerRow.expanded ? -90 : 0
+                        color: "#cdd6f4"
+                        font.family: "CaskaydiaMono Nerd Font"
+                        font.pixelSize: 10
+                        font.bold: true
+
+                        Behavior on rotation {
+                            NumberAnimation {
+                                duration: 120
+                                easing.type: Easing.OutCubic
+                            }
+
+                        }
+
+                    }
+
+                    MouseArea {
+                        id: disclosureArea
+
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: mediaPlayerRow.toggleExpanded(mediaPlayerRow.player)
+                    }
+
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 1
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: root.trackTitle(mediaPlayerRow.player)
+                        color: "#cdd6f4"
+                        elide: Text.ElideRight
+                        font.family: "CaskaydiaMono Nerd Font"
+                        font.pixelSize: 11
+                        font.bold: true
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: root.trackSubtitle(mediaPlayerRow.player)
+                        color: "#6c7086"
+                        elide: Text.ElideRight
+                        font.family: "CaskaydiaMono Nerd Font"
+                        font.pixelSize: 9
+                    }
+
+                }
+
+                Text {
+                    text: mediaPlayerRow.hasVolume ? root.percent(mediaPlayerRow.volume) + "%" : root.playerLabel(mediaPlayerRow.player)
+                    color: "#6c7086"
+                    elide: Text.ElideRight
+                    font.family: "CaskaydiaMono Nerd Font"
+                    font.pixelSize: 9
+                }
+
+            }
+
+            Rectangle {
+                id: expandedCard
+
+                Layout.fillWidth: true
+                implicitHeight: 74
+                radius: 6
+                color: "transparent"
+                visible: mediaPlayerRow.expanded
+
+                RowLayout {
+                    anchors.fill: parent
+                    spacing: 8
+
+                    Rectangle {
+                        Layout.preferredWidth: 48
+                        Layout.preferredHeight: 48
+                        radius: 6
+                        color: "#313244"
+                        clip: true
+
+                        Image {
+                            anchors.fill: parent
+                            source: mediaPlayerRow.player ? mediaPlayerRow.player.trackArtUrl : ""
+                            fillMode: Image.PreserveAspectCrop
+                            visible: source !== ""
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "\uf001"
+                            color: "#cdd6f4"
+                            font.family: "CaskaydiaMono Nerd Font"
+                            font.pixelSize: 17
+                            visible: !mediaPlayerRow.player || mediaPlayerRow.player.trackArtUrl === ""
+                        }
+
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 6
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 24
+                            spacing: 6
+
+                            MediaButton {
+                                glyph: "\uf048"
+                                enabled: mediaPlayerRow.player !== null && mediaPlayerRow.player.canGoPrevious
+                                onClicked: mediaPlayerRow.player.previous()
+                            }
+
+                            MediaButton {
+                                glyph: mediaPlayerRow.player && mediaPlayerRow.player.isPlaying ? "\uf04c" : "\uf04b"
+                                enabled: mediaPlayerRow.player !== null && mediaPlayerRow.player.canTogglePlaying
+                                onClicked: mediaPlayerRow.player.togglePlaying()
+                            }
+
+                            MediaButton {
+                                glyph: "\uf051"
+                                enabled: mediaPlayerRow.player !== null && mediaPlayerRow.player.canGoNext
+                                onClicked: mediaPlayerRow.player.next()
+                            }
+
+                            Item {
+                                Layout.fillWidth: true
+                            }
+
+                            Text {
+                                text: root.playerLabel(mediaPlayerRow.player)
+                                color: "#6c7086"
+                                elide: Text.ElideRight
+                                font.family: "CaskaydiaMono Nerd Font"
+                                font.pixelSize: 9
+                            }
+
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 18
+                            spacing: 8
+                            visible: mediaPlayerRow.hasVolume
+
+                            Text {
+                                Layout.preferredWidth: 24
+                                text: root.playerHasStreamVolume(mediaPlayerRow.player) ? "\uf028" : "\uf001"
+                                color: "#cdd6f4"
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                                font.family: "CaskaydiaMono Nerd Font"
+                                font.pixelSize: 9
+                            }
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 8
+                                radius: 4
+                                color: "#313244"
+
+                                Rectangle {
+                                    width: parent.width * root.clamp(mediaPlayerRow.volume / 1.5, 0, 1)
+                                    height: parent.height
+                                    radius: parent.radius
+                                    color: "#89b4fa"
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    enabled: mediaPlayerRow.hasVolume
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: (mouse) => {
+                                        return mediaPlayerRow.setVolume(mediaPlayerRow.player, mouse.x / width * 1.5);
+                                    }
+                                    onPositionChanged: (mouse) => {
+                                        if (pressed)
+                                            mediaPlayerRow.setVolume(mediaPlayerRow.player, mouse.x / width * 1.5);
+
+                                    }
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
         }
 
     }
