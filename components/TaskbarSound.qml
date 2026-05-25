@@ -25,7 +25,7 @@ Item {
     }))
     readonly property bool ready: Pipewire.ready && defaultSink !== null && defaultSink.ready && defaultSink.audio !== null
     readonly property var appStreams: Pipewire.nodes.values.filter((node) => {
-        return node.ready && node.isStream && !node.isSink && node.audio !== null;
+        return root.isApplicationStream(node);
     }).sort((left, right) => {
         return root.streamLabel(left).localeCompare(root.streamLabel(right));
     })
@@ -38,6 +38,10 @@ Item {
         return root.playerLabel(left).localeCompare(root.playerLabel(right));
     })
     readonly property var activePlayer: players.length > 0 ? players[0] : null
+    readonly property var appPlayers: players.filter((player) => {
+        return player.volumeSupported && player.dbusName.indexOf("playerctld") === -1;
+    })
+    readonly property int appControlCount: appStreams.length + appPlayers.length
 
     function clamp(value, minimum, maximum) {
         return Math.max(minimum, Math.min(maximum, value));
@@ -57,6 +61,19 @@ Item {
         if (node && node.audio)
             node.audio.muted = !node.audio.muted;
 
+    }
+
+    function isApplicationStream(node) {
+        if (!node.ready || !node.isStream || node.audio === null)
+            return false;
+
+        const properties = node.properties || {
+        };
+        const mediaClass = properties["media.class"] || "";
+        if (mediaClass.indexOf("Internal") !== -1)
+            return false;
+
+        return properties["application.name"] || properties["application.process.binary"] || properties["media.name"] || properties["media.title"];
     }
 
     function streamLabel(node) {
@@ -103,6 +120,20 @@ Item {
 
     function playerLabel(player) {
         return player.identity || player.desktopEntry || "Media player";
+    }
+
+    function playerVolumeSubtitle(player) {
+        const title = root.trackTitle(player);
+        if (title !== "Nothing playing")
+            return title;
+
+        return player.dbusName;
+    }
+
+    function setPlayerVolume(player, value) {
+        if (player && player.volumeSupported)
+            player.volume = root.clamp(value, 0, 1.5);
+
     }
 
     function trackTitle(player) {
@@ -176,7 +207,7 @@ Item {
         id: soundPopup
 
         implicitWidth: 340
-        implicitHeight: Math.min(560, soundPopupContent.implicitHeight + 24)
+        implicitHeight: Math.min(720, soundPopupContent.implicitHeight + 24)
         visible: false
         color: "transparent"
         grabFocus: true
@@ -528,18 +559,19 @@ Item {
                     verticalAlignment: Text.AlignVCenter
                     font.family: "CaskaydiaMono Nerd Font"
                     font.pixelSize: 12
-                    visible: root.appStreams.length === 0
+                    visible: root.appControlCount === 0
                 }
 
                 ListView {
                     id: streamList
 
                     Layout.fillWidth: true
-                    Layout.preferredHeight: Math.min(156, contentHeight)
+                    Layout.preferredHeight: Math.min(220, contentHeight)
                     clip: true
                     spacing: 8
                     interactive: contentHeight > height
                     model: root.appStreams
+                    visible: root.appStreams.length > 0
 
                     delegate: VolumeRow {
                         required property var modelData
@@ -553,6 +585,29 @@ Item {
                         }
                         onToggleMute: (node) => {
                             return root.toggleNodeMute(node);
+                        }
+                    }
+
+                }
+
+                ListView {
+                    id: playerVolumeList
+
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: Math.min(220, contentHeight)
+                    clip: true
+                    spacing: 8
+                    interactive: contentHeight > height
+                    model: root.appPlayers
+                    visible: root.appPlayers.length > 0
+
+                    delegate: PlayerVolumeRow {
+                        required property var modelData
+
+                        width: playerVolumeList.width
+                        player: modelData
+                        onSetVolume: (player, value) => {
+                            return root.setPlayerVolume(player, value);
                         }
                     }
 
@@ -666,6 +721,118 @@ Item {
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: parent.clicked()
+        }
+
+    }
+
+    component PlayerVolumeRow: Rectangle {
+        id: playerVolumeRow
+
+        property var player: null
+        readonly property real volume: player ? player.volume : 0
+
+        signal setVolume(var player, real value)
+
+        implicitHeight: 58
+        height: implicitHeight
+        radius: 6
+        color: playerRowHover.hovered ? "#313244" : "transparent"
+        opacity: player && player.volumeSupported ? 1 : 0.55
+
+        HoverHandler {
+            id: playerRowHover
+        }
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 8
+            anchors.rightMargin: 8
+            anchors.topMargin: 6
+            anchors.bottomMargin: 6
+            spacing: 5
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 18
+                spacing: 8
+
+                Text {
+                    Layout.fillWidth: true
+                    text: playerVolumeRow.player ? root.playerLabel(playerVolumeRow.player) : "Media app"
+                    color: "#cdd6f4"
+                    elide: Text.ElideRight
+                    font.family: "CaskaydiaMono Nerd Font"
+                    font.pixelSize: 11
+                    font.bold: true
+                }
+
+                Text {
+                    text: root.percent(playerVolumeRow.volume) + "%"
+                    color: "#a6adc8"
+                    font.family: "CaskaydiaMono Nerd Font"
+                    font.pixelSize: 10
+                }
+
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 22
+                spacing: 8
+
+                Text {
+                    Layout.preferredWidth: 24
+                    text: "\uf001"
+                    color: "#cdd6f4"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    font.family: "CaskaydiaMono Nerd Font"
+                    font.pixelSize: 10
+                }
+
+                Rectangle {
+                    id: playerVolumeTrack
+
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 8
+                    radius: 4
+                    color: "#313244"
+
+                    Rectangle {
+                        width: parent.width * root.clamp(playerVolumeRow.volume / 1.5, 0, 1)
+                        height: parent.height
+                        radius: parent.radius
+                        color: "#89b4fa"
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        enabled: playerVolumeRow.player !== null && playerVolumeRow.player.volumeSupported
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: (mouse) => {
+                            return playerVolumeRow.setVolume(playerVolumeRow.player, mouse.x / width * 1.5);
+                        }
+                        onPositionChanged: (mouse) => {
+                            if (pressed)
+                                playerVolumeRow.setVolume(playerVolumeRow.player, mouse.x / width * 1.5);
+
+                        }
+                    }
+
+                }
+
+            }
+
+            Text {
+                Layout.fillWidth: true
+                text: playerVolumeRow.player ? root.playerVolumeSubtitle(playerVolumeRow.player) : ""
+                color: "#6c7086"
+                elide: Text.ElideRight
+                font.family: "CaskaydiaMono Nerd Font"
+                font.pixelSize: 9
+                visible: text !== ""
+            }
+
         }
 
     }
