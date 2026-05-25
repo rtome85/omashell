@@ -7,6 +7,7 @@ Item {
     id: root
 
     required property QtObject panelWindow
+    property var toastNotification: null
     readonly property int unreadCount: notificationServer.trackedNotifications.values.length
 
     function appLabel(notification) {
@@ -22,8 +23,22 @@ Item {
         for (const notification of notifications) notification.dismiss()
     }
 
+    function showToast(notification) {
+        root.toastNotification = notification;
+        toastPopup.visible = true;
+        toastTimer.restart();
+    }
+
     implicitWidth: notificationsButton.width
     implicitHeight: notificationsButton.height
+
+    Timer {
+        id: toastTimer
+
+        interval: 5000
+        repeat: false
+        onTriggered: toastPopup.visible = false
+    }
 
     NotificationServer {
         id: notificationServer
@@ -36,6 +51,7 @@ Item {
             if (!notification.transient)
                 notification.tracked = true;
 
+            root.showToast(notification);
         }
     }
 
@@ -309,6 +325,125 @@ Item {
 
                         }
 
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+    PopupWindow {
+        id: toastPopup
+
+        implicitWidth: 340
+        implicitHeight: toastContent.implicitHeight + 24
+        visible: false
+        color: "transparent"
+
+        anchor {
+            window: root.panelWindow
+            rect.x: Math.round(root.panelWindow.width - toastPopup.width - 8)
+            rect.y: root.panelWindow.height + 8
+            adjustment: PopupAdjustment.SlideX | PopupAdjustment.ResizeY
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            radius: 8
+            color: "#1e1e2e"
+            border.width: 1
+            border.color: root.toastNotification && root.toastNotification.urgency === NotificationUrgency.Critical ? "#f38ba8" : "#45475a"
+            clip: true
+
+            RowLayout {
+                id: toastContent
+
+                anchors.fill: parent
+                anchors.margins: 12
+                spacing: 10
+
+                Text {
+                    Layout.preferredWidth: 24
+                    text: root.toastNotification && root.toastNotification.urgency === NotificationUrgency.Critical ? "\uf071" : "\uf0f3"
+                    color: root.toastNotification && root.toastNotification.urgency === NotificationUrgency.Critical ? "#f38ba8" : "#89b4fa"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignTop
+                    font.family: "CaskaydiaMono Nerd Font"
+                    font.pixelSize: 13
+                    font.bold: true
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 3
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: root.toastNotification ? root.appLabel(root.toastNotification) : ""
+                        color: "#a6adc8"
+                        elide: Text.ElideRight
+                        textFormat: Text.PlainText
+                        font.family: "CaskaydiaMono Nerd Font"
+                        font.pixelSize: 10
+                        font.bold: true
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: root.toastNotification && root.toastNotification.summary !== "" ? root.toastNotification.summary : "Untitled"
+                        color: "#cdd6f4"
+                        elide: Text.ElideRight
+                        textFormat: Text.PlainText
+                        font.family: "CaskaydiaMono Nerd Font"
+                        font.pixelSize: 12
+                        font.bold: true
+                    }
+
+                    Text {
+                        readonly property string displayBody: root.toastNotification ? root.bodyText(root.toastNotification) : ""
+
+                        Layout.fillWidth: true
+                        text: displayBody
+                        color: "#a6adc8"
+                        wrapMode: Text.WordWrap
+                        maximumLineCount: 3
+                        elide: Text.ElideRight
+                        textFormat: Text.PlainText
+                        font.family: "CaskaydiaMono Nerd Font"
+                        font.pixelSize: 11
+                        visible: displayBody.length > 0
+                    }
+
+                }
+
+                Rectangle {
+                    Layout.preferredWidth: 26
+                    Layout.preferredHeight: 26
+                    radius: 6
+                    color: toastCloseArea.containsMouse ? "#45475a" : "transparent"
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "\uf00d"
+                        color: "#cdd6f4"
+                        font.family: "CaskaydiaMono Nerd Font"
+                        font.pixelSize: 10
+                        font.bold: true
+                    }
+
+                    MouseArea {
+                        id: toastCloseArea
+
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            toastTimer.stop();
+                            toastPopup.visible = false;
+                        }
                     }
 
                 }
