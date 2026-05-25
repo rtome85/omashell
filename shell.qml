@@ -42,7 +42,16 @@ PanelWindow {
             Layout.fillHeight: true
 
             TaskbarSystray {
+                id: taskbarSystray
+
                 anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                panelWindow: root
+            }
+
+            TaskbarBluetooth {
+                anchors.right: parent.right
+                anchors.rightMargin: taskbarSystray.width + 4
                 anchors.verticalCenter: parent.verticalCenter
                 panelWindow: root
             }
