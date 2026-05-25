@@ -9,6 +9,7 @@ Item {
 
     required property QtObject panelWindow
     readonly property int itemCount: SystemTray.items.values.length
+    readonly property string buttonIcon: Quickshell.hasThemeIcon("view-app-grid-symbolic") ? Quickshell.iconPath("view-app-grid-symbolic") : (Quickshell.hasThemeIcon("view-grid-symbolic") ? Quickshell.iconPath("view-grid-symbolic") : "")
 
     implicitWidth: systrayButton.width
     implicitHeight: systrayButton.height
@@ -16,7 +17,7 @@ Item {
     Rectangle {
         id: systrayButton
 
-        width: Math.max(44, systrayButtonContent.implicitWidth + 16)
+        width: 30
         height: 22
         radius: 6
         color: trayPopup.visible ? "#313244" : "transparent"
@@ -24,29 +25,22 @@ Item {
         border.color: "#cdd6f4"
         opacity: root.itemCount > 0 ? 1 : 0.55
 
-        RowLayout {
-            id: systrayButtonContent
-
+        IconImage {
             anchors.centerIn: parent
-            spacing: 5
+            width: 15
+            height: 15
+            source: root.buttonIcon
+            visible: root.buttonIcon !== ""
+        }
 
-            Text {
-                text: "^"
-                color: "#cdd6f4"
-                font.family: "CaskaydiaMono Nerd Font"
-                font.pixelSize: 15
-                font.bold: true
-            }
-
-            Text {
-                text: root.itemCount
-                color: "#cdd6f4"
-                font.family: "CaskaydiaMono Nerd Font"
-                font.pixelSize: 12
-                font.bold: true
-                visible: root.itemCount > 0
-            }
-
+        Text {
+            anchors.centerIn: parent
+            text: "^"
+            color: "#cdd6f4"
+            font.family: "CaskaydiaMono Nerd Font"
+            font.pixelSize: 15
+            font.bold: true
+            visible: root.buttonIcon === ""
         }
 
         MouseArea {
