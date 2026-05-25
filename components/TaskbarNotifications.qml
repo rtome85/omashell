@@ -29,6 +29,22 @@ Item {
         toastTimer.restart();
     }
 
+    function togglePopup() {
+        notificationsPopup.visible = !notificationsPopup.visible;
+    }
+
+    function closeToast() {
+        toastTimer.stop();
+        toastPopup.visible = false;
+    }
+
+    function activateOnEnterOrSpace(event, action) {
+        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+            action();
+            event.accepted = true;
+        }
+    }
+
     implicitWidth: notificationsButton.width
     implicitHeight: notificationsButton.height
 
@@ -93,8 +109,17 @@ Item {
 
         MouseArea {
             anchors.fill: parent
+            focus: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: notificationsPopup.visible = !notificationsPopup.visible
+            Accessible.name: notificationsPopup.visible ? "Close notifications" : "Open notifications"
+            Accessible.role: Accessible.Button
+            Accessible.description: root.unreadCount === 1 ? "Shows 1 unread notification" : "Shows " + root.unreadCount + " unread notifications"
+            Keys.onPressed: (event) => {
+                root.activateOnEnterOrSpace(event, () => {
+                    root.togglePopup();
+                });
+            }
+            onClicked: root.togglePopup()
         }
 
     }
@@ -183,8 +208,17 @@ Item {
 
                             anchors.fill: parent
                             enabled: root.unreadCount > 0
+                            focus: true
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
+                            Accessible.name: "Clear notifications"
+                            Accessible.role: Accessible.Button
+                            Accessible.description: root.unreadCount === 1 ? "Dismisses 1 unread notification" : "Dismisses all " + root.unreadCount + " unread notifications"
+                            Keys.onPressed: (event) => {
+                                root.activateOnEnterOrSpace(event, () => {
+                                    root.dismissAll();
+                                });
+                            }
                             onClicked: root.dismissAll()
                         }
 
@@ -316,8 +350,17 @@ Item {
                                     id: dismissArea
 
                                     anchors.fill: parent
+                                    focus: true
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
+                                    Accessible.name: "Dismiss notification"
+                                    Accessible.role: Accessible.Button
+                                    Accessible.description: "Dismisses " + (notificationRow.modelData.summary || "this notification")
+                                    Keys.onPressed: (event) => {
+                                        root.activateOnEnterOrSpace(event, () => {
+                                            notificationRow.modelData.dismiss();
+                                        });
+                                    }
                                     onClicked: notificationRow.modelData.dismiss()
                                 }
 
@@ -438,12 +481,18 @@ Item {
                         id: toastCloseArea
 
                         anchors.fill: parent
+                        focus: true
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            toastTimer.stop();
-                            toastPopup.visible = false;
+                        Accessible.name: "Close notification toast"
+                        Accessible.role: Accessible.Button
+                        Accessible.description: "Hides the floating notification"
+                        Keys.onPressed: (event) => {
+                            root.activateOnEnterOrSpace(event, () => {
+                                root.closeToast();
+                            });
                         }
+                        onClicked: root.closeToast()
                     }
 
                 }
