@@ -271,66 +271,6 @@ Item {
                 anchors.margins: 12
                 spacing: 10
 
-                RowLayout {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 34
-                    spacing: 8
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 1
-
-                        Text {
-                            Layout.fillWidth: true
-                            text: "Sound"
-                            color: "#cdd6f4"
-                            elide: Text.ElideRight
-                            font.family: "CaskaydiaMono Nerd Font"
-                            font.pixelSize: 15
-                            font.bold: true
-                        }
-
-                        Text {
-                            Layout.fillWidth: true
-                            text: root.ready ? root.percent(root.defaultSink.audio.volume) + "%" : "No output device"
-                            color: "#a6adc8"
-                            elide: Text.ElideRight
-                            font.family: "CaskaydiaMono Nerd Font"
-                            font.pixelSize: 11
-                        }
-
-                    }
-
-                    Rectangle {
-                        Layout.preferredWidth: 32
-                        Layout.preferredHeight: 26
-                        radius: 6
-                        color: masterMuteArea.containsMouse ? "#45475a" : "#313244"
-                        opacity: root.ready ? 1 : 0.55
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: root.soundIcon()
-                            color: "#cdd6f4"
-                            font.family: "CaskaydiaMono Nerd Font"
-                            font.pixelSize: 13
-                            font.bold: true
-                        }
-
-                        MouseArea {
-                            id: masterMuteArea
-
-                            anchors.fill: parent
-                            enabled: root.ready
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.toggleNodeMute(root.defaultSink)
-                        }
-
-                    }
-
-                }
-
                 VolumeRow {
                     Layout.fillWidth: true
                     label: "MASTER VOLUME"
@@ -921,12 +861,8 @@ Item {
         implicitHeight: 58
         height: implicitHeight
         radius: 6
-        color: rowHover.hovered ? "#313244" : "transparent"
+        color: "transparent"
         opacity: enabled ? 1 : 0.55
-
-        HoverHandler {
-            id: rowHover
-        }
 
         ColumnLayout {
             anchors.fill: parent
