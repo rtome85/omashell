@@ -9,6 +9,8 @@ Item {
 
     required property QtObject panelWindow
     property string expandedPlayerKey: ""
+    property bool outputDevicesExpanded: true
+    property bool inputDevicesExpanded: true
     readonly property var defaultSink: Pipewire.defaultAudioSink
     readonly property var defaultSource: Pipewire.defaultAudioSource
     readonly property var outputDevices: Pipewire.nodes.values.filter((node) => {
@@ -117,15 +119,17 @@ Item {
     }
 
     function selectOutputDevice(node) {
-        if (node)
+        if (node) {
             Pipewire.preferredDefaultAudioSink = node;
-
+            root.outputDevicesExpanded = false;
+        }
     }
 
     function selectInputDevice(node) {
-        if (node)
+        if (node) {
             Pipewire.preferredDefaultAudioSource = node;
-
+            root.inputDevicesExpanded = false;
+        }
     }
 
     function playerLabel(player) {
@@ -351,14 +355,43 @@ Item {
                     Layout.fillWidth: true
                     spacing: 6
 
-                    Text {
+                    Item {
                         Layout.fillWidth: true
-                        text: "OUTPUT DEVICE"
-                        color: "#a6adc8"
-                        elide: Text.ElideRight
-                        font.family: "CaskaydiaMono Nerd Font"
-                        font.pixelSize: 11
-                        font.bold: true
+                        implicitHeight: 16
+
+                        RowLayout {
+                            anchors.fill: parent
+                            spacing: 0
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: "OUTPUT DEVICE"
+                                color: "#a6adc8"
+                                elide: Text.ElideRight
+                                font.family: "CaskaydiaMono Nerd Font"
+                                font.pixelSize: 11
+                                font.bold: true
+                            }
+
+                            Text {
+                                text: root.outputDevicesExpanded ? "\uf078" : "\uf054"
+                                color: outputSectionArea.containsMouse ? "#cdd6f4" : "#6c7086"
+                                font.family: "CaskaydiaMono Nerd Font"
+                                font.pixelSize: 10
+                                font.bold: true
+                            }
+
+                        }
+
+                        MouseArea {
+                            id: outputSectionArea
+
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.outputDevicesExpanded = !root.outputDevicesExpanded
+                        }
+
                     }
 
                     Text {
@@ -370,11 +403,11 @@ Item {
                         verticalAlignment: Text.AlignVCenter
                         font.family: "CaskaydiaMono Nerd Font"
                         font.pixelSize: 11
-                        visible: root.outputDevices.length === 0
+                        visible: root.outputDevicesExpanded && root.outputDevices.length === 0
                     }
 
                     Repeater {
-                        model: root.outputDevices
+                        model: root.outputDevicesExpanded ? root.outputDevices : (root.defaultSink ? [root.defaultSink] : [])
 
                         DeviceRow {
                             required property var modelData
@@ -382,11 +415,10 @@ Item {
                             Layout.fillWidth: true
                             glyph: "\uf028"
                             label: root.deviceLabel(modelData)
-                            // subtitle: root.deviceSubtitle(modelData)
                             selected: root.isSelectedDevice(modelData, root.defaultSink)
                             node: modelData
-                            onSelectDevice: (node) => {
-                                return root.selectOutputDevice(node);
+                            onSelectDevice: (device) => {
+                                return root.selectOutputDevice(device);
                             }
                         }
 
@@ -398,14 +430,43 @@ Item {
                     Layout.fillWidth: true
                     spacing: 6
 
-                    Text {
+                    Item {
                         Layout.fillWidth: true
-                        text: "INPUT DEVICE"
-                        color: "#a6adc8"
-                        elide: Text.ElideRight
-                        font.family: "CaskaydiaMono Nerd Font"
-                        font.pixelSize: 11
-                        font.bold: true
+                        implicitHeight: 16
+
+                        RowLayout {
+                            anchors.fill: parent
+                            spacing: 0
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: "INPUT DEVICE"
+                                color: "#a6adc8"
+                                elide: Text.ElideRight
+                                font.family: "CaskaydiaMono Nerd Font"
+                                font.pixelSize: 11
+                                font.bold: true
+                            }
+
+                            Text {
+                                text: root.inputDevicesExpanded ? "\uf078" : "\uf054"
+                                color: inputSectionArea.containsMouse ? "#cdd6f4" : "#6c7086"
+                                font.family: "CaskaydiaMono Nerd Font"
+                                font.pixelSize: 10
+                                font.bold: true
+                            }
+
+                        }
+
+                        MouseArea {
+                            id: inputSectionArea
+
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.inputDevicesExpanded = !root.inputDevicesExpanded
+                        }
+
                     }
 
                     Text {
@@ -417,11 +478,11 @@ Item {
                         verticalAlignment: Text.AlignVCenter
                         font.family: "CaskaydiaMono Nerd Font"
                         font.pixelSize: 11
-                        visible: root.inputDevices.length === 0
+                        visible: root.inputDevicesExpanded && root.inputDevices.length === 0
                     }
 
                     Repeater {
-                        model: root.inputDevices
+                        model: root.inputDevicesExpanded ? root.inputDevices : (root.defaultSource ? [root.defaultSource] : [])
 
                         DeviceRow {
                             required property var modelData
@@ -429,11 +490,10 @@ Item {
                             Layout.fillWidth: true
                             glyph: "\uf130"
                             label: root.deviceLabel(modelData)
-                            // subtitle: root.deviceSubtitle(modelData)
                             selected: root.isSelectedDevice(modelData, root.defaultSource)
                             node: modelData
-                            onSelectDevice: (node) => {
-                                return root.selectInputDevice(node);
+                            onSelectDevice: (device) => {
+                                return root.selectInputDevice(device);
                             }
                         }
 
@@ -509,14 +569,12 @@ Item {
         property bool selected: false
         property var node: null
 
-        signal selectDevice(var node)
+        signal selectDevice(var device)
 
         implicitHeight: 34
         height: implicitHeight
         radius: 6
         color: deviceArea.containsMouse ? "#313244" : "transparent"
-        border.width: selected ? 1 : 0
-        border.color: "#89b4fa"
 
         RowLayout {
             anchors.fill: parent
