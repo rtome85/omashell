@@ -122,13 +122,16 @@ Item {
         id: updaterWindow
 
         implicitWidth: 400
-        implicitHeight: 520
+        implicitHeight: contentRect.implicitHeight
         visible: false
         title: "System Updater"
         onVisibleChanged: root.updaterOpen = visible
 
         Rectangle {
-            anchors.fill: parent
+            id: contentRect
+
+            width: parent.width
+            implicitHeight: updaterWindowContent.implicitHeight + 24
             radius: 8
             color: "#1e1e2e"
             border.width: 1
@@ -138,7 +141,9 @@ Item {
             ColumnLayout {
                 id: updaterWindowContent
 
-                anchors.fill: parent
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
                 anchors.margins: 12
                 spacing: 10
 
