@@ -17,7 +17,7 @@ Item {
     Process {
         id: updateProcess
 
-        command: ["ghostty", "-e", "sh", "-c", "omarchy update; echo; read -p 'Press enter to close...' _"]
+        command: ["ghostty", "-e", "sh", "-c", "omarchy update; echo; printf 'Press enter to close... '; read _"]
         onExited: (code, status) => {
             root.updating = false;
             root.lastChecked = Qt.formatDateTime(new Date(), "HH:mm");
