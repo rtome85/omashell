@@ -869,7 +869,7 @@ Item {
                     text: root.percent(volumeRow.volume) + "%"
                     color: volumeRow.muted ? "#f38ba8" : "#a6adc8"
                     font.family: "CaskaydiaMono Nerd Font"
-                    font.pixelSize: 10
+                    font.pixelSize: 12
                 }
 
             }
@@ -883,14 +883,14 @@ Item {
                     Layout.preferredWidth: 24
                     Layout.preferredHeight: 22
                     radius: 6
-                    color: muteArea.containsMouse ? "#45475a" : "#313244"
+                    color: muteArea.containsMouse ? "#45475a" : "transparent"
 
                     Text {
                         anchors.centerIn: parent
-                        text: volumeRow.muted || volumeRow.volume <= 0 ? "\uf6a9" : "\uf028"
+                        text: volumeRow.muted || volumeRow.volume <= 0 ? "\ueee8" : "\uf028"
                         color: volumeRow.muted ? "#f38ba8" : "#cdd6f4"
                         font.family: "CaskaydiaMono Nerd Font"
-                        font.pixelSize: 10
+                        font.pixelSize: 12
                     }
 
                     MouseArea {
