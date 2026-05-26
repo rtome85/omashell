@@ -12,7 +12,7 @@ Variants {
         required property var modelData
 
         screen: modelData
-        implicitHeight: 30
+        implicitHeight: 34
         color: "#1e1e2e"
 
         anchors {
@@ -25,6 +25,8 @@ Variants {
             anchors.fill: parent
             anchors.leftMargin: 8
             anchors.rightMargin: 8
+            anchors.topMargin: 4
+            anchors.bottomMargin: 4
             spacing: 0
 
             Item {
