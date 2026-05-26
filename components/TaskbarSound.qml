@@ -616,13 +616,9 @@ Item {
         implicitHeight: headerRow.implicitHeight + (expanded ? expandedCard.implicitHeight + 6 : 0)
         height: implicitHeight
         radius: 6
-        color: expanded ? "#181825" : (mediaPlayerHover.hovered ? "#313244" : "transparent")
+        color: expanded ? "#181825" : (mediaPlayerHeaderHover.hovered ? "#313244" : "transparent")
         border.width: expanded ? 1 : 0
         border.color: "#313244"
-
-        HoverHandler {
-            id: mediaPlayerHover
-        }
 
         ColumnLayout {
             anchors.fill: parent
@@ -635,42 +631,6 @@ Item {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 34
                 spacing: 8
-
-                Rectangle {
-                    Layout.preferredWidth: 24
-                    Layout.preferredHeight: 24
-                    radius: 6
-                    color: disclosureArea.containsMouse ? "#45475a" : "#313244"
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "\uf053"
-                        rotation: mediaPlayerRow.expanded ? -90 : 0
-                        color: "#cdd6f4"
-                        font.family: "CaskaydiaMono Nerd Font"
-                        font.pixelSize: 10
-                        font.bold: true
-
-                        Behavior on rotation {
-                            NumberAnimation {
-                                duration: 120
-                                easing.type: Easing.OutCubic
-                            }
-
-                        }
-
-                    }
-
-                    MouseArea {
-                        id: disclosureArea
-
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: mediaPlayerRow.toggleExpanded(mediaPlayerRow.player)
-                    }
-
-                }
 
                 ColumnLayout {
                     Layout.fillWidth: true
@@ -703,6 +663,24 @@ Item {
                     elide: Text.ElideRight
                     font.family: "CaskaydiaMono Nerd Font"
                     font.pixelSize: 9
+                }
+
+                Text {
+                    text: mediaPlayerRow.expanded ? "\uf078" : "\uf054"
+                    color: mediaPlayerHeaderHover.hovered ? "#cdd6f4" : "#6c7086"
+                    font.family: "CaskaydiaMono Nerd Font"
+                    font.pixelSize: 10
+                    font.bold: true
+                }
+
+                HoverHandler {
+                    id: mediaPlayerHeaderHover
+
+                    cursorShape: Qt.PointingHandCursor
+                }
+
+                TapHandler {
+                    onTapped: mediaPlayerRow.toggleExpanded(mediaPlayerRow.player)
                 }
 
             }
