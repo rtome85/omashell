@@ -8,6 +8,7 @@ Item {
     id: root
 
     required property QtObject panelWindow
+    property int popupRightOffset: 8
     readonly property int itemCount: SystemTray.items.values.length
 
     implicitWidth: systrayButton.width
@@ -50,7 +51,7 @@ Item {
 
         anchor {
             window: root.panelWindow
-            rect.x: Math.round(root.panelWindow.width - trayPopup.width - 8)
+            rect.x: Math.round(root.panelWindow.width - trayPopup.width - root.popupRightOffset)
             rect.y: root.panelWindow.height + 6
             adjustment: PopupAdjustment.SlideX | PopupAdjustment.ResizeY
         }

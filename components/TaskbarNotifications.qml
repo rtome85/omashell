@@ -7,6 +7,7 @@ Item {
     id: root
 
     required property QtObject panelWindow
+    property int popupRightOffset: 8
     property var toastNotification: null
     readonly property int unreadCount: notificationServer.trackedNotifications.values.length
 
@@ -133,7 +134,7 @@ Item {
 
         anchor {
             window: root.panelWindow
-            rect.x: Math.round(root.panelWindow.width - notificationsPopup.width - 114)
+            rect.x: Math.round(root.panelWindow.width - notificationsPopup.width - root.popupRightOffset)
             rect.y: root.panelWindow.height + 6
             adjustment: PopupAdjustment.SlideX | PopupAdjustment.ResizeY
         }
