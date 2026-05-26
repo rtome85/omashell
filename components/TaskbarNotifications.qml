@@ -78,8 +78,6 @@ Item {
         height: 22
         radius: 6
         color: notificationsPopup.visible ? "#313244" : "transparent"
-        border.width: notificationsPopup.visible ? 1 : 0
-        border.color: "#cdd6f4"
         opacity: root.unreadCount > 0 ? 1 : 0.6
 
         RowLayout {
@@ -89,10 +87,10 @@ Item {
             spacing: 5
 
             Text {
-                text: root.unreadCount > 0 ? "\uf0f3" : "\uf1f6"
+                text: root.unreadCount > 0 ? "\uf0f3" : "\uf0f3"
                 color: "#cdd6f4"
                 font.family: "CaskaydiaMono Nerd Font"
-                font.pixelSize: 14
+                font.pixelSize: 15
                 font.bold: true
             }
 

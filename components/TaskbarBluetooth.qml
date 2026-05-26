@@ -77,15 +77,13 @@ Item {
         height: 22
         radius: 6
         color: bluetoothPopup.visible ? "#313244" : "transparent"
-        border.width: bluetoothPopup.visible ? 1 : 0
-        border.color: "#cdd6f4"
         opacity: root.available ? (root.active ? 1 : 0.62) : 0.38
 
         Text {
             id: bluetoothIcon
 
             anchors.centerIn: parent
-            text: "\uf293"
+            text: "\udb80\udcaf"
             color: "#cdd6f4"
             font.family: "CaskaydiaMono Nerd Font"
             font.pixelSize: 15

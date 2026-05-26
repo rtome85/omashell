@@ -43,8 +43,6 @@ Item {
         height: 22
         radius: 6
         color: datePopup.visible ? "#313244" : "transparent"
-        border.width: datePopup.visible ? 1 : 0
-        border.color: "#cdd6f4"
 
         Text {
             id: calendarButtonLabel
@@ -109,7 +107,7 @@ Item {
 
                         Text {
                             anchors.centerIn: parent
-                            text: "<"
+                            text: "\udb83\udcdd"
                             color: "#cdd6f4"
                             font.family: "CaskaydiaMono Nerd Font"
                             font.pixelSize: 20
@@ -145,7 +143,7 @@ Item {
 
                         Text {
                             anchors.centerIn: parent
-                            text: ">"
+                            text: "\udb83\udcdf"
                             color: "#cdd6f4"
                             font.family: "CaskaydiaMono Nerd Font"
                             font.pixelSize: 20

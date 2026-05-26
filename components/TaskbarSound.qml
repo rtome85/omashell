@@ -195,7 +195,7 @@ Item {
             return "\uf6a9";
 
         if (root.defaultSink.audio.muted || root.defaultSink.audio.volume <= 0)
-            return "\uf6a9";
+            return "\ueee8";
 
         if (root.defaultSink.audio.volume < 0.5)
             return "\uf027";
@@ -217,8 +217,6 @@ Item {
         height: 22
         radius: 6
         color: soundPopup.visible ? "#313244" : "transparent"
-        border.width: soundPopup.visible ? 1 : 0
-        border.color: "#cdd6f4"
         opacity: root.ready ? 1 : 0.45
 
         Text {
@@ -228,7 +226,7 @@ Item {
             text: root.soundIcon()
             color: "#cdd6f4"
             font.family: "CaskaydiaMono Nerd Font"
-            font.pixelSize: 14
+            font.pixelSize: 15
             font.bold: true
         }
 
