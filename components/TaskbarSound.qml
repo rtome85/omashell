@@ -658,14 +658,6 @@ Item {
                 }
 
                 Text {
-                    text: mediaPlayerRow.hasVolume ? root.percent(mediaPlayerRow.volume) + "%" : root.playerLabel(mediaPlayerRow.player)
-                    color: "#6c7086"
-                    elide: Text.ElideRight
-                    font.family: "CaskaydiaMono Nerd Font"
-                    font.pixelSize: 9
-                }
-
-                Text {
                     text: mediaPlayerRow.expanded ? "\uf078" : "\uf054"
                     color: mediaPlayerHeaderHover.hovered ? "#cdd6f4" : "#6c7086"
                     font.family: "CaskaydiaMono Nerd Font"
@@ -807,6 +799,16 @@ Item {
                                     }
                                 }
 
+                            }
+
+                            Text {
+                                Layout.preferredWidth: 34
+                                text: root.percent(mediaPlayerRow.volume) + "%"
+                                color: "#6c7086"
+                                horizontalAlignment: Text.AlignRight
+                                verticalAlignment: Text.AlignVCenter
+                                font.family: "CaskaydiaMono Nerd Font"
+                                font.pixelSize: 9
                             }
 
                         }
