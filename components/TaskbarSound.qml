@@ -691,7 +691,7 @@ Item {
                     spacing: 8
 
                     Rectangle {
-                        Layout.preferredWidth: 48
+                        Layout.preferredWidth: 88
                         Layout.preferredHeight: 48
                         radius: 6
                         color: "#313244"

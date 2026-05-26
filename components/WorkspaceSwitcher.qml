@@ -49,9 +49,9 @@ Item {
                 readonly property var workspace: root.workspaceById(workspaceId)
                 readonly property bool active: root.activeWorkspaceId === workspaceId
 
-                width: Math.max(22, label.implicitWidth + 15)
+                width: workspaceButton.workspaceId === 10 ? Math.max(22, label.implicitWidth + 15) : 22
                 height: 22
-                radius: 20
+                radius: height / 2
                 color: "transparent"
                 border.width: active ? 1 : 0
                 border.color: "#cdd6f4"
