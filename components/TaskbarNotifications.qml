@@ -329,17 +329,6 @@ Item {
                             anchors.margins: 8
                             spacing: 8
 
-                            Text {
-                                Layout.preferredWidth: 24
-                                text: notificationRow.modelData.urgency === NotificationUrgency.Critical ? "\uf071" : "\uf0f3"
-                                color: notificationRow.modelData.urgency === NotificationUrgency.Critical ? "#f38ba8" : "#89b4fa"
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignTop
-                                font.family: "CaskaydiaMono Nerd Font"
-                                font.pixelSize: 13
-                                font.bold: true
-                            }
-
                             ColumnLayout {
                                 Layout.fillWidth: true
                                 spacing: 3
