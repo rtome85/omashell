@@ -31,7 +31,7 @@ Item {
         return root.isPlaybackStream(node);
     })
     readonly property var players: Mpris.players.values.filter((player) => {
-        return player.dbusName.indexOf("playerctld") === -1 && (player.trackTitle !== "" || player.identity !== "");
+        return root.shouldShowPlayer(player);
     }).sort((left, right) => {
         if (left.isPlaying !== right.isPlaying)
             return left.isPlaying ? -1 : 1;
@@ -134,6 +134,13 @@ Item {
 
     function playerLabel(player) {
         return player.identity || player.desktopEntry || "Media player";
+    }
+
+    function shouldShowPlayer(player) {
+        if (!player || player.dbusName.indexOf("playerctld") !== -1)
+            return false;
+
+        return player.trackTitle !== "" && player.trackTitle !== "Nothing playing";
     }
 
     function playerKey(player) {
