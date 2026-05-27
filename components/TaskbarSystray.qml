@@ -8,6 +8,7 @@ Item {
     id: root
 
     required property QtObject panelWindow
+    property int popupRightOffset: 8
     readonly property int itemCount: SystemTray.items.values.length
 
     implicitWidth: systrayButton.width
@@ -20,16 +21,14 @@ Item {
         height: 22
         radius: 6
         color: trayPopup.visible ? "#313244" : "transparent"
-        border.width: trayPopup.visible ? 1 : 0
-        border.color: "#cdd6f4"
         opacity: root.itemCount > 0 ? 1 : 0.55
 
         Text {
             anchors.centerIn: parent
-            text: "\uf00a"
+            text: "\udb84\uddd9"
             color: "#cdd6f4"
             font.family: "CaskaydiaMono Nerd Font"
-            font.pixelSize: 14
+            font.pixelSize: 15
             font.bold: true
         }
 
@@ -52,7 +51,7 @@ Item {
 
         anchor {
             window: root.panelWindow
-            rect.x: Math.round(root.panelWindow.width - trayPopup.width - 8)
+            rect.x: Math.round(root.panelWindow.width - trayPopup.width - root.popupRightOffset)
             rect.y: root.panelWindow.height + 6
             adjustment: PopupAdjustment.SlideX | PopupAdjustment.ResizeY
         }

@@ -7,6 +7,7 @@ Item {
     id: root
 
     required property QtObject panelWindow
+    property int popupRightOffset: 8
     property var toastNotification: null
     readonly property int unreadCount: notificationServer.trackedNotifications.values.length
 
@@ -16,6 +17,34 @@ Item {
 
     function bodyText(notification) {
         return (notification.body || "").replace(/<[^>]*>/g, "").trim();
+    }
+
+    function actionCount(notification) {
+        return notification && notification.actions ? notification.actions.length : 0;
+    }
+
+    function primaryAction(notification) {
+        if (root.actionCount(notification) === 0)
+            return null;
+
+        for (const action of notification.actions) {
+            if (action.identifier === "default")
+                return action;
+
+        }
+        return notification.actions[0];
+    }
+
+    function invokeAction(action) {
+        if (!action)
+            return ;
+
+        root.closeToast();
+        action.invoke();
+    }
+
+    function invokePrimaryAction(notification) {
+        root.invokeAction(root.primaryAction(notification));
     }
 
     function dismissAll() {
@@ -36,6 +65,7 @@ Item {
     function closeToast() {
         toastTimer.stop();
         toastPopup.visible = false;
+        root.toastNotification = null;
     }
 
     function activateOnEnterOrSpace(event, action) {
@@ -53,7 +83,7 @@ Item {
 
         interval: 5000
         repeat: false
-        onTriggered: toastPopup.visible = false
+        onTriggered: root.closeToast()
     }
 
     NotificationServer {
@@ -67,6 +97,11 @@ Item {
             if (!notification.transient)
                 notification.tracked = true;
 
+            notification.closed.connect(() => {
+                if (root.toastNotification === notification)
+                    root.closeToast();
+
+            });
             root.showToast(notification);
         }
     }
@@ -78,8 +113,6 @@ Item {
         height: 22
         radius: 6
         color: notificationsPopup.visible ? "#313244" : "transparent"
-        border.width: notificationsPopup.visible ? 1 : 0
-        border.color: "#cdd6f4"
         opacity: root.unreadCount > 0 ? 1 : 0.6
 
         RowLayout {
@@ -89,10 +122,10 @@ Item {
             spacing: 5
 
             Text {
-                text: root.unreadCount > 0 ? "\uf0f3" : "\uf1f6"
+                text: root.unreadCount > 0 ? "\uf0f3" : "\uf0f3"
                 color: "#cdd6f4"
                 font.family: "CaskaydiaMono Nerd Font"
-                font.pixelSize: 14
+                font.pixelSize: 15
                 font.bold: true
             }
 
@@ -135,7 +168,7 @@ Item {
 
         anchor {
             window: root.panelWindow
-            rect.x: Math.round(root.panelWindow.width - notificationsPopup.width - 114)
+            rect.x: Math.round(root.panelWindow.width - notificationsPopup.width - root.popupRightOffset)
             rect.y: root.panelWindow.height + 6
             adjustment: PopupAdjustment.SlideX | PopupAdjustment.ResizeY
         }
@@ -260,6 +293,7 @@ Item {
 
                         required property var modelData
                         readonly property string displayBody: root.bodyText(modelData)
+                        readonly property bool hasActions: root.actionCount(modelData) > 0
 
                         width: notificationsList.width
                         height: Math.max(72, notificationContent.implicitHeight + 16)
@@ -270,6 +304,22 @@ Item {
 
                         HoverHandler {
                             id: rowHover
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            enabled: notificationRow.hasActions
+                            focus: true
+                            cursorShape: Qt.PointingHandCursor
+                            Accessible.name: "Open notification"
+                            Accessible.role: Accessible.Button
+                            Accessible.description: "Invokes " + (notificationRow.modelData.summary || "this notification")
+                            Keys.onPressed: (event) => {
+                                root.activateOnEnterOrSpace(event, () => {
+                                    root.invokePrimaryAction(notificationRow.modelData);
+                                });
+                            }
+                            onClicked: root.invokePrimaryAction(notificationRow.modelData)
                         }
 
                         RowLayout {
@@ -327,6 +377,63 @@ Item {
                                     font.family: "CaskaydiaMono Nerd Font"
                                     font.pixelSize: 11
                                     visible: notificationRow.displayBody.length > 0
+                                }
+
+                                Flow {
+                                    Layout.fillWidth: true
+                                    spacing: 6
+                                    visible: notificationRow.hasActions
+
+                                    Repeater {
+                                        model: notificationRow.modelData.actions
+
+                                        Rectangle {
+                                            required property var modelData
+
+                                            width: Math.min(132, Math.max(54, actionText.implicitWidth + 18))
+                                            height: 24
+                                            radius: 6
+                                            color: actionArea.containsMouse ? "#45475a" : "#313244"
+                                            border.width: 1
+                                            border.color: "#45475a"
+
+                                            Text {
+                                                id: actionText
+
+                                                anchors.centerIn: parent
+                                                width: parent.width - 12
+                                                text: modelData.text || "Open"
+                                                color: "#cdd6f4"
+                                                elide: Text.ElideRight
+                                                horizontalAlignment: Text.AlignHCenter
+                                                textFormat: Text.PlainText
+                                                font.family: "CaskaydiaMono Nerd Font"
+                                                font.pixelSize: 10
+                                                font.bold: true
+                                            }
+
+                                            MouseArea {
+                                                id: actionArea
+
+                                                anchors.fill: parent
+                                                focus: true
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                Accessible.name: actionText.text
+                                                Accessible.role: Accessible.Button
+                                                Accessible.description: "Invokes notification action " + actionText.text
+                                                Keys.onPressed: (event) => {
+                                                    root.activateOnEnterOrSpace(event, () => {
+                                                        root.invokeAction(modelData);
+                                                    });
+                                                }
+                                                onClicked: root.invokeAction(modelData)
+                                            }
+
+                                        }
+
+                                    }
+
                                 }
 
                             }
@@ -401,6 +508,22 @@ Item {
             border.color: root.toastNotification && root.toastNotification.urgency === NotificationUrgency.Critical ? "#f38ba8" : "#45475a"
             clip: true
 
+            MouseArea {
+                anchors.fill: parent
+                enabled: root.actionCount(root.toastNotification) > 0
+                focus: true
+                cursorShape: Qt.PointingHandCursor
+                Accessible.name: "Open notification"
+                Accessible.role: Accessible.Button
+                Accessible.description: "Invokes " + (root.toastNotification && root.toastNotification.summary ? root.toastNotification.summary : "this notification")
+                Keys.onPressed: (event) => {
+                    root.activateOnEnterOrSpace(event, () => {
+                        root.invokePrimaryAction(root.toastNotification);
+                    });
+                }
+                onClicked: root.invokePrimaryAction(root.toastNotification)
+            }
+
             RowLayout {
                 id: toastContent
 
@@ -458,6 +581,63 @@ Item {
                         font.family: "CaskaydiaMono Nerd Font"
                         font.pixelSize: 11
                         visible: displayBody.length > 0
+                    }
+
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: 6
+                        visible: root.actionCount(root.toastNotification) > 0
+
+                        Repeater {
+                            model: root.toastNotification ? root.toastNotification.actions : []
+
+                            Rectangle {
+                                required property var modelData
+
+                                width: Math.min(132, Math.max(54, toastActionText.implicitWidth + 18))
+                                height: 24
+                                radius: 6
+                                color: toastActionArea.containsMouse ? "#45475a" : "#313244"
+                                border.width: 1
+                                border.color: "#45475a"
+
+                                Text {
+                                    id: toastActionText
+
+                                    anchors.centerIn: parent
+                                    width: parent.width - 12
+                                    text: modelData.text || "Open"
+                                    color: "#cdd6f4"
+                                    elide: Text.ElideRight
+                                    horizontalAlignment: Text.AlignHCenter
+                                    textFormat: Text.PlainText
+                                    font.family: "CaskaydiaMono Nerd Font"
+                                    font.pixelSize: 10
+                                    font.bold: true
+                                }
+
+                                MouseArea {
+                                    id: toastActionArea
+
+                                    anchors.fill: parent
+                                    focus: true
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    Accessible.name: toastActionText.text
+                                    Accessible.role: Accessible.Button
+                                    Accessible.description: "Invokes notification action " + toastActionText.text
+                                    Keys.onPressed: (event) => {
+                                        root.activateOnEnterOrSpace(event, () => {
+                                            root.invokeAction(modelData);
+                                        });
+                                    }
+                                    onClicked: root.invokeAction(modelData)
+                                }
+
+                            }
+
+                        }
+
                     }
 
                 }

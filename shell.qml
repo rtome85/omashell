@@ -12,7 +12,7 @@ Variants {
         required property var modelData
 
         screen: modelData
-        implicitHeight: 30
+        implicitHeight: 34
         color: "#1e1e2e"
 
         anchors {
@@ -25,6 +25,8 @@ Variants {
             anchors.fill: parent
             anchors.leftMargin: 8
             anchors.rightMargin: 8
+            anchors.topMargin: 4
+            anchors.bottomMargin: 4
             spacing: 0
 
             Item {
@@ -48,8 +50,8 @@ Variants {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
-                TaskbarSystray {
-                    id: taskbarSystray
+                TaskbarNotifications {
+                    id: taskbarNotifications
 
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
@@ -60,7 +62,7 @@ Variants {
                     id: taskbarBluetooth
 
                     anchors.right: parent.right
-                    anchors.rightMargin: taskbarSystray.width + 4
+                    anchors.rightMargin: taskbarNotifications.width + 4
                     anchors.verticalCenter: parent.verticalCenter
                     panelWindow: root
                 }
@@ -69,23 +71,24 @@ Variants {
                     id: taskbarSound
 
                     anchors.right: parent.right
-                    anchors.rightMargin: taskbarSystray.width + taskbarBluetooth.width + 8
+                    anchors.rightMargin: taskbarNotifications.width + taskbarBluetooth.width + 8
                     anchors.verticalCenter: parent.verticalCenter
                     panelWindow: root
                 }
 
-                TaskbarNotifications {
-                    id: taskbarNotifications
+                TaskbarSystray {
+                    id: taskbarSystray
 
                     anchors.right: parent.right
-                    anchors.rightMargin: taskbarSystray.width + taskbarBluetooth.width + taskbarSound.width + 12
+                    anchors.rightMargin: taskbarNotifications.width + taskbarBluetooth.width + taskbarSound.width + 12
                     anchors.verticalCenter: parent.verticalCenter
                     panelWindow: root
+                    popupRightOffset: anchors.rightMargin + 8
                 }
 
                 TaskbarSystemUpdate {
                     anchors.right: parent.right
-                    anchors.rightMargin: taskbarSystray.width + taskbarBluetooth.width + taskbarSound.width + taskbarNotifications.width + 16
+                    anchors.rightMargin: taskbarNotifications.width + taskbarBluetooth.width + taskbarSound.width + taskbarSystray.width + 16
                     anchors.verticalCenter: parent.verticalCenter
                 }
 

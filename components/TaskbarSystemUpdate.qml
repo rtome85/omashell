@@ -31,8 +31,6 @@ Item {
         height: 22
         radius: 6
         color: root.updaterOpen ? "#313244" : "transparent"
-        border.width: root.updaterOpen ? 1 : 0
-        border.color: "#cdd6f4"
 
         Text {
             id: updateIcon
@@ -41,7 +39,7 @@ Item {
             text: ""
             color: root.updating ? "#a6adc8" : "#cdd6f4"
             font.family: "CaskaydiaMono Nerd Font"
-            font.pixelSize: 14
+            font.pixelSize: 15
             font.bold: true
         }
 

@@ -31,7 +31,7 @@ Item {
         return root.isPlaybackStream(node);
     })
     readonly property var players: Mpris.players.values.filter((player) => {
-        return player.dbusName.indexOf("playerctld") === -1 && (player.trackTitle !== "" || player.identity !== "");
+        return root.shouldShowPlayer(player);
     }).sort((left, right) => {
         if (left.isPlaying !== right.isPlaying)
             return left.isPlaying ? -1 : 1;
@@ -136,6 +136,13 @@ Item {
         return player.identity || player.desktopEntry || "Media player";
     }
 
+    function shouldShowPlayer(player) {
+        if (!player || player.dbusName.indexOf("playerctld") !== -1)
+            return false;
+
+        return player.trackTitle !== "" && player.trackTitle !== "Nothing playing";
+    }
+
     function playerKey(player) {
         return player ? player.dbusName : "";
     }
@@ -195,7 +202,7 @@ Item {
             return "\uf6a9";
 
         if (root.defaultSink.audio.muted || root.defaultSink.audio.volume <= 0)
-            return "\uf6a9";
+            return "\ueee8";
 
         if (root.defaultSink.audio.volume < 0.5)
             return "\uf027";
@@ -217,8 +224,6 @@ Item {
         height: 22
         radius: 6
         color: soundPopup.visible ? "#313244" : "transparent"
-        border.width: soundPopup.visible ? 1 : 0
-        border.color: "#cdd6f4"
         opacity: root.ready ? 1 : 0.45
 
         Text {
@@ -228,7 +233,7 @@ Item {
             text: root.soundIcon()
             color: "#cdd6f4"
             font.family: "CaskaydiaMono Nerd Font"
-            font.pixelSize: 14
+            font.pixelSize: 15
             font.bold: true
         }
 
@@ -618,13 +623,9 @@ Item {
         implicitHeight: headerRow.implicitHeight + (expanded ? expandedCard.implicitHeight + 6 : 0)
         height: implicitHeight
         radius: 6
-        color: expanded ? "#181825" : (mediaPlayerHover.hovered ? "#313244" : "transparent")
+        color: expanded ? "#181825" : (mediaPlayerHeaderHover.hovered ? "#313244" : "transparent")
         border.width: expanded ? 1 : 0
         border.color: "#313244"
-
-        HoverHandler {
-            id: mediaPlayerHover
-        }
 
         ColumnLayout {
             anchors.fill: parent
@@ -637,42 +638,6 @@ Item {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 34
                 spacing: 8
-
-                Rectangle {
-                    Layout.preferredWidth: 24
-                    Layout.preferredHeight: 24
-                    radius: 6
-                    color: disclosureArea.containsMouse ? "#45475a" : "#313244"
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "\uf053"
-                        rotation: mediaPlayerRow.expanded ? -90 : 0
-                        color: "#cdd6f4"
-                        font.family: "CaskaydiaMono Nerd Font"
-                        font.pixelSize: 10
-                        font.bold: true
-
-                        Behavior on rotation {
-                            NumberAnimation {
-                                duration: 120
-                                easing.type: Easing.OutCubic
-                            }
-
-                        }
-
-                    }
-
-                    MouseArea {
-                        id: disclosureArea
-
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: mediaPlayerRow.toggleExpanded(mediaPlayerRow.player)
-                    }
-
-                }
 
                 ColumnLayout {
                     Layout.fillWidth: true
@@ -700,11 +665,21 @@ Item {
                 }
 
                 Text {
-                    text: mediaPlayerRow.hasVolume ? root.percent(mediaPlayerRow.volume) + "%" : root.playerLabel(mediaPlayerRow.player)
-                    color: "#6c7086"
-                    elide: Text.ElideRight
+                    text: mediaPlayerRow.expanded ? "\uf078" : "\uf054"
+                    color: mediaPlayerHeaderHover.hovered ? "#cdd6f4" : "#6c7086"
                     font.family: "CaskaydiaMono Nerd Font"
-                    font.pixelSize: 9
+                    font.pixelSize: 10
+                    font.bold: true
+                }
+
+                HoverHandler {
+                    id: mediaPlayerHeaderHover
+
+                    cursorShape: Qt.PointingHandCursor
+                }
+
+                TapHandler {
+                    onTapped: mediaPlayerRow.toggleExpanded(mediaPlayerRow.player)
                 }
 
             }
@@ -723,7 +698,7 @@ Item {
                     spacing: 8
 
                     Rectangle {
-                        Layout.preferredWidth: 48
+                        Layout.preferredWidth: 88
                         Layout.preferredHeight: 48
                         radius: 6
                         color: "#313244"
@@ -833,6 +808,16 @@ Item {
 
                             }
 
+                            Text {
+                                Layout.preferredWidth: 34
+                                text: root.percent(mediaPlayerRow.volume) + "%"
+                                color: "#6c7086"
+                                horizontalAlignment: Text.AlignRight
+                                verticalAlignment: Text.AlignVCenter
+                                font.family: "CaskaydiaMono Nerd Font"
+                                font.pixelSize: 9
+                            }
+
                         }
 
                     }
@@ -891,7 +876,7 @@ Item {
                     text: root.percent(volumeRow.volume) + "%"
                     color: volumeRow.muted ? "#f38ba8" : "#a6adc8"
                     font.family: "CaskaydiaMono Nerd Font"
-                    font.pixelSize: 10
+                    font.pixelSize: 12
                 }
 
             }
@@ -905,14 +890,14 @@ Item {
                     Layout.preferredWidth: 24
                     Layout.preferredHeight: 22
                     radius: 6
-                    color: muteArea.containsMouse ? "#45475a" : "#313244"
+                    color: muteArea.containsMouse ? "#45475a" : "transparent"
 
                     Text {
                         anchors.centerIn: parent
-                        text: volumeRow.muted || volumeRow.volume <= 0 ? "\uf6a9" : "\uf028"
+                        text: volumeRow.muted || volumeRow.volume <= 0 ? "\ueee8" : "\uf028"
                         color: volumeRow.muted ? "#f38ba8" : "#cdd6f4"
                         font.family: "CaskaydiaMono Nerd Font"
-                        font.pixelSize: 10
+                        font.pixelSize: 12
                     }
 
                     MouseArea {
