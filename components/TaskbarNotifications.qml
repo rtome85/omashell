@@ -285,7 +285,7 @@ Item {
                     clip: true
                     spacing: 8
                     interactive: contentHeight > height
-                    model: notificationServer.trackedNotifications
+                    model: notificationServer.trackedNotifications.values
                     visible: root.unreadCount > 0
 
                     delegate: Rectangle {
