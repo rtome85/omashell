@@ -296,11 +296,11 @@ Item {
                         readonly property bool hasActions: root.actionCount(modelData) > 0
 
                         width: notificationsList.width
-                        height: Math.max(72, notificationContent.implicitHeight + 16)
+                        height: Math.max(72, notificationContent.implicitHeight + 26)
                         radius: 6
                         color: rowHover.hovered ? "#313244" : "transparent"
-                        border.width: modelData.urgency === NotificationUrgency.Critical ? 1 : 0
-                        border.color: "#f38ba8"
+                        border.width: 1 
+                        border.color: "#313244"
 
                         HoverHandler {
                             id: rowHover
@@ -326,23 +326,14 @@ Item {
                             id: notificationContent
 
                             anchors.fill: parent
-                            anchors.margins: 8
+                            anchors.margins: 12
                             spacing: 8
+
 
                             ColumnLayout {
                                 Layout.fillWidth: true
                                 spacing: 3
 
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: root.appLabel(notificationRow.modelData)
-                                    color: "#a6adc8"
-                                    elide: Text.ElideRight
-                                    textFormat: Text.PlainText
-                                    font.family: "CaskaydiaMono Nerd Font"
-                                    font.pixelSize: 10
-                                    font.bold: true
-                                }
 
                                 Text {
                                     Layout.fillWidth: true
